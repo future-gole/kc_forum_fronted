@@ -63,7 +63,8 @@
             </div>
 
             <div class="article-user" v-if="article.user">
-              <el-avatar :src="article.user.avatarUrl || defaultAvatar" :size="40"></el-avatar>
+              <!-- 使用计算属性来拼接完整的头像 URL -->
+              <el-avatar :src="article.user.avatarUrl ? avatarBaseURL + article.user.avatarUrl : defaultAvatar" :size="40"></el-avatar>
               <span class="user-name">{{ article.user.nickName }}</span>
             </div>
             <div class="article-user" v-else>
@@ -117,6 +118,9 @@ import request from "@/utils/request.js";
 
 dayjs.extend(relativeTime);
 dayjs.locale('zh-cn');
+
+// 头像的 baseURL，需要和后端配置的 avatar-base-url 对应
+const avatarBaseURL = 'http://localhost:58080/avatars';
 
 // Route and router
 const route = useRoute();

@@ -4,11 +4,30 @@
       <div class="profile-cover"></div>
       <div class="profile-info">
         <div class="avatar-container">
-          <img :src="defaultAvatar" :alt="userData.nickName" class="avatar" />
+          <img
+              :src="userData.avatarUrl ? avatarBaseURL + userData.avatarUrl : defaultAvatar"
+              :alt="userData.nickName"
+              class="avatar"
+          />
         </div>
         <div class="user-details">
-          <h1 class="username">{{ userData.nickName }}</h1>
-          <p class="user-id">@{{ userData.userName }}</p>
+          <div class="name-and-actions">
+            <div class="user-name-container">
+              <h1 class="username">{{ userData.nickName }}</h1>
+              <p class="user-id">@{{ userData.userName }}</p>
+            </div>
+            <div v-if="isCurrentUser" class="edit-actions">
+              <button class="edit-profile-btn" @click="showEditProfileModal = true">
+                编辑个人资料
+              </button>
+              <button class="change-pwd-btn" @click="showChangePasswordModal = true">
+                修改密码
+              </button>
+              <button class="edit-email-btn" @click="showEditEmailModal = true">
+                修改邮箱
+              </button>
+            </div>
+          </div>
           <div class="stats">
             <div class="stat-item">
               <span class="stat-value">{{ userData.articleCount }}</span>
@@ -98,19 +117,302 @@
         </div>
       </div>
     </div>
+
+    <!-- 编辑个人资料悬浮窗 -->
+    <div v-if="showEditProfileModal" class="modal-overlay" @click.self="showEditProfileModal = false">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>编辑个人资料</h2>
+          <button class="close-button" @click="showEditProfileModal = false">×</button>
+        </div>
+        <div class="modal-body">
+          <form @submit.prevent="updateProfile">
+            <div class="form-group">
+              <label for="userName">用户名</label>
+              <input type="text" id="userName" v-model="editForm.userName" required />
+            </div>
+            <div class="form-group">
+              <label for="nickName">昵称</label>
+              <input type="text" id="nickName" v-model="editForm.nickName" required />
+            </div>
+            <div class="form-group">
+              <label for="phone">电话</label>
+              <input type="text" id="phone" v-model="editForm.phone" />
+            </div>
+            <div class="form-group">
+              <label>性别</label>
+              <div class="radio-group">
+                <label class="radio-option">
+                  <input type="radio" v-model="editForm.gender" :value="1" /> 男
+                </label>
+                <label class="radio-option">
+                  <input type="radio" v-model="editForm.gender" :value="2" /> 女
+                </label>
+                <label class="radio-option">
+                  <input type="radio" v-model="editForm.gender" :value="0" /> 保密
+                </label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="remark">留言</label>
+              <textarea id="remark" v-model="editForm.remark"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-cancel" @click="showEditProfileModal = false">取消</button>
+          <button class="btn btn-primary" @click="updateProfile" :disabled="isSubmitting">
+            {{ isSubmitting ? '保存中...' : '保存' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 修改密码悬浮窗 -->
+    <div v-if="showChangePasswordModal" class="modal-overlay" @click.self="showChangePasswordModal = false">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>修改密码</h2>
+          <button class="close-button" @click="showChangePasswordModal = false">×</button>
+        </div>
+        <div class="modal-body">
+          <form @submit.prevent="updatePassword">
+            <div class="form-group">
+              <label for="password">新密码</label>
+              <input type="password" id="password" v-model="passwordForm.password" required />
+            </div>
+            <div class="form-group">
+              <label for="repeatPassword">确认密码</label>
+              <input type="password" id="repeatPassword" v-model="passwordForm.repeatPassword" required />
+            </div>
+            <div v-if="passwordError" class="error-message">
+              {{ passwordError }}
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-cancel" @click="showChangePasswordModal = false">取消</button>
+          <button class="btn btn-primary" @click="updatePassword" :disabled="isSubmitting">
+            {{ isSubmitting ? '保存中...' : '保存' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 修改邮箱弹窗 -->
+    <div v-if="showEditEmailModal" class="modal-overlay" @click.self="showEditEmailModal = false">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>修改邮箱</h2>
+          <button class="close-button" @click="showEditEmailModal = false">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="code">验证码</label>
+            <input type="text" id="code" v-model="emailForm.code" placeholder="请输入验证码" />
+            <button @click="sendVerificationCode">发送验证码</button>
+          </div>
+          <div class="form-group">
+            <label for="email">新邮箱地址</label>
+            <input type="email" id="email" v-model="emailForm.email" placeholder="请输入新的邮箱地址" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-cancel" @click="showEditEmailModal = false">取消</button>
+          <button class="btn btn-primary" @click="updateEmail">保存</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import {ref, computed, onMounted, watchEffect} from 'vue';
+import { ref, computed, onMounted, watchEffect } from 'vue';
+import { useUserStore } from "@/stores/user.js";
 import { useRoute } from 'vue-router';
 import request from "@/utils/request.js";
+import { ElMessage } from 'element-plus';
+import {jwtDecode} from "jwt-decode";
 const route = useRoute();
 const userData = ref({});
 const userArticles = ref([]);
 const isLoading = ref(true);
 const activeTab = ref('info');
+// 头像的 baseURL，需要和后端配置的 avatar-base-url 对应
+const avatarBaseURL = 'http://localhost:58080/avatars';
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png';
+
+//获取userStore实例
+const userStore = useUserStore();
+//获取id
+const currentUserId = jwtDecode(localStorage.getItem("token"),{ header: false }).Id
+// 获取路由中的用户id
+const profileUserId = computed(() => route.params.userId);
+
+// 判断是否是当前用户的个人页面
+const isCurrentUser = computed(() => {
+  // console.log("当前用户ID:", currentUserId, typeof currentUserId);
+  // console.log("当前用户ID:", );
+  // console.log("页面用户ID:", profileUserId.value, typeof profileUserId.value);
+
+  // 确保两个ID都转为字符串进行比较
+  return currentUserId && profileUserId.value &&
+      String(currentUserId).trim() === String(profileUserId.value).trim();
+});
+
+
+
+// 编辑个人资料相关状态
+const showEditProfileModal = ref(false);
+const showChangePasswordModal = ref(false);
+const showEditEmailModal = ref(false);
+const isSubmitting = ref(false);
+const passwordError = ref('');
+
+// 编辑表单数据
+const editForm = ref({
+  userName: '',
+  nickName: '',
+  phone: '',
+  gender: 0,
+  remark: '',
+  email: userStore.getCurrentUserEmail()
+});
+
+// 密码表单数据
+const passwordForm = ref({
+  password: '',
+  repeatPassword: ''
+});
+
+// 邮箱编辑表单
+const emailForm = ref({
+  code: '',
+  email: ''
+});
+
+// // 初始化邮箱表单
+// const initEmailForm = () => {
+//   emailForm.value.email = userData.value.email;
+// };
+
+// 监听用户数据变化，更新基本信息表单
+watchEffect(() => {
+  if (userData.value) {
+    editForm.value = {
+      userName: userData.value.userName || '',
+      nickName: userData.value.nickName || '',
+      phone: userData.value.phone || '',
+      gender: userData.value.gender || 0,
+      remark: userData.value.remark || '',
+      email: userStore.getCurrentUserEmail()
+    };
+  }
+});
+
+// 更新个人资料
+const updateProfile = async () => {
+  try {
+    console.log(1)
+    isSubmitting.value = true;
+    const response = await request.post('/user/modifyInfo', editForm.value);
+
+    if (response.data.code === 200) {
+      // 更新成功，刷新用户数据
+      await fetchUserData(currentUserId);
+      showEditProfileModal.value = false;
+      ElMessage.success('个人资料更新成功');
+    } else {
+      ElMessage.error('更新失败: ' + response.data.message);
+    }
+  } catch (error) {
+    console.error('更新个人资料失败:', error);
+    ElMessage.error('更新失败，请稍后再试');
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+// 发送验证码
+const sendVerificationCode = async () => {
+  if (!userStore.getCurrentUserEmail()) {
+    ElMessage.warning('请输入邮箱地址');
+    return;
+  }
+
+  try {
+    const response = await request.post(
+        `/email/sendVerificationCode?email=${userStore.getCurrentUserEmail()}`
+    );
+
+    if (response.data.code === 200) {
+      ElMessage.success('验证码已发送');
+      // startCountdown();
+    } else {
+      ElMessage.error('验证码发送失败');
+    }
+  } catch (error) {
+    ElMessage.error('发送验证码失败');
+    console.error('Error:', error);
+  }
+};
+
+// 更新邮箱
+const updateEmail = async () => {
+  //先验证code
+  try {
+    const verifyResponse = await request.post(
+        `/email/verifyEmail?email=${userStore.getCurrentUserEmail()}&code=${emailForm.value.code}`
+    );
+    if (verifyResponse.data.code !== 200) {
+      ElMessage.error(verifyResponse.data.message);
+      return;
+    }
+    // 调用API更新邮箱
+    const response = await request.post(`/user/modifyEmail?email=${emailForm.value.email}`);
+    // 更新成功后关闭弹窗
+    showEditEmailModal.value = false;
+    // 刷新用户数据
+    await fetchUserData(currentUserId);
+    ElMessage.success("更新邮箱成功");
+  } catch (error) {
+    console.error('更新邮箱失败', error);
+  }
+};
+
+// 更新密码
+const updatePassword = async () => {
+  // 验证两次密码是否一致
+  if (passwordForm.value.password !== passwordForm.value.repeatPassword) {
+    ElMessage.error( '两次输入的密码不一致');
+    return;
+  }
+
+  passwordError.value = '';
+
+  try {
+    isSubmitting.value = true;
+    const response = await request.post('/user/modifyPassword', null, {
+      params: {
+        password: passwordForm.value.password,
+        repeatPassword: passwordForm.value.repeatPassword
+      }
+    });
+
+    if (response.data.code === 200) {
+      showChangePasswordModal.value = false;
+      passwordForm.value = { password: '', repeatPassword: '' };
+      ElMessage.success('密码修改成功');
+    } else {
+      ElMessage.error(response.data.message);
+    }
+  } catch (error) {
+    ElMessage.error('修改密码失败:', error);
+    passwordError.value = '修改密码失败，请稍后再试';
+  } finally {
+    isSubmitting.value = false;
+  }
+};
 
 // Pagination variables
 const currentPage = ref(1);
@@ -150,7 +452,7 @@ const genderText = computed(() => {
   switch (userData.value.gender) {
     case 1: return '男';
     case 2: return '女';
-    default: return '未设置';
+    default: return '保密哦~';
   }
 });
 
@@ -180,7 +482,7 @@ const formatDateTime = (dateString) => {
   return `${formatDate(dateString)} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
-
+//获取用户信息
 const fetchUserData = async (userId) => {
   try {
     isLoading.value = true;
@@ -212,18 +514,315 @@ const fetchUserArticles = async (userId) => {
   }
 };
 
-// 监听路由参数变化
+//监听路由参数变化
 watchEffect(() => {
   const userId = Number(route.params.userId)
   fetchUserData(userId);
 })
 
 // onMounted(() => {
-//   fetchUserData();
+//   fetchUserData(currentUserId);
 // });
 </script>
 
 <style scoped>
+/* 用户名和操作按钮布局 */
+.name-and-actions {
+  display: flex;
+  flex-direction: column; /* 小屏幕：垂直排列 */
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.user-name-container {
+  text-align: center; /* 确保用户名居中 */
+}
+
+/* 编辑按钮样式 */
+.edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* 小屏幕：居中对齐 */
+  gap: 10px;
+}
+
+/* 媒体查询 - 平板和桌面端 */
+@media (min-width: 768px) {
+  .name-and-actions {
+    flex-direction: row; /* 大屏幕：水平排列 */
+    justify-content: space-between; /* 大屏幕：两端对齐 */
+    align-items: center;
+  }
+
+  .user-name-container {
+    text-align: left;
+  }
+
+  .edit-actions {
+    justify-content: flex-end; /* 大屏幕：右对齐 */
+  }
+}
+.edit-profile-btn,
+.edit-email-btn,
+.change-pwd-btn {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  white-space: nowrap; /* 避免按钮文字换行 */
+}
+
+.edit-profile-btn {
+  background-color: #1890ff;
+  color: white;
+}
+
+.edit-profile-btn:hover {
+  background-color: #40a9ff;
+}
+
+.change-pwd-btn {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #d9d9d9;
+}
+
+.change-pwd-btn:hover {
+  background-color: #e0e0e0;
+}
+
+/* 悬浮表单的基础样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  animation: fadeIn 0.2s ease-out;
+  will-change: opacity;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 450px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 0;
+  position: relative;
+  transform: translateY(0);
+  animation: slideUp 0.3s ease-out;
+  will-change: transform;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* 表单头部样式 */
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #262626;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  font-size: 20px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.close-button:hover {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+/* 表单内容样式 */
+.modal-body {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #595959;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 95%;
+  padding: 10px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.3s;
+  background-color: #fff;
+}
+
+.form-group input:hover,
+.form-group textarea:hover {
+  border-color: #40a9ff;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  outline: none;
+}
+
+.form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* 单选按钮组样式 */
+.radio-group {
+  display: flex;
+  gap: 24px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.radio-option input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  accent-color: #1890ff;
+}
+
+/* 表单底部操作区 */
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-cancel {
+  background-color: #f5f5f5;
+  color: #595959;
+}
+
+.btn-cancel:hover {
+  background-color: #e8e8e8;
+}
+
+.btn-primary {
+  background-color: #1890ff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #40a9ff;
+}
+
+.btn-primary:disabled {
+  background-color: #bae7ff;
+  cursor: not-allowed;
+}
+
+
+/* 错误信息样式 */
+.error-message {
+  color: #ff4d4f;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+/* 优化滚动条样式 */
+.modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
 /* Add these styles for pagination */
 .pagination-container {
   display: flex;

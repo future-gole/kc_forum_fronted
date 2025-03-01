@@ -116,7 +116,7 @@ const sendVerificationCode = async () => {
       ElMessage.success('验证码已发送');
       // startCountdown();
     } else {
-      ElMessage.error('验证码发送失败');
+      ElMessage.error(response.data.message);
     }
   } catch (error) {
     ElMessage.error('发送验证码失败');
@@ -167,7 +167,6 @@ const handleRegister = async () => {
     const verifyResponse = await request.post(
         `/email/verifyEmail?email=${registerForm.email}&code=${registerForm.verificationCode}`
     );//后端不是以json的形式接收的！！！！！不可以包装成data发送！！！！！
-    console.log(111)
     if (verifyResponse.data.code !== 200) {
       ElMessage.error(verifyResponse.data.message);
       return;
@@ -215,11 +214,15 @@ const handleLogin = async () => {
         email: loginForm.email,
         password: loginForm.password
     });
-    localStorage.setItem('token', response.data.data.authorization);
-    ElMessage.success('登录成功');
+    if(response.data.code === 200){
+      localStorage.setItem('token', response.data.data.authorization);
+      ElMessage.success('登录成功');
+    }else {
+      ElMessage.error(response.data.message);
+    }
     router.push('/home');
   } catch (error) {
-    ElMessage.error('登录请求发生错误');
+    ElMessage.error('登录请求发生错误,请联系管理员~');
     console.error('登录错误:', error.message, error.response);
   }
 };
