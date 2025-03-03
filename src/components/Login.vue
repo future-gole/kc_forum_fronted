@@ -1,51 +1,53 @@
 <template>
   <div class="login-page">
-  <div class="box">
-    <div class="pre-box" :style="{ transform: preBoxTransform, backgroundColor: preBoxBackgroundColor }">
-      <h1>WELCOME</h1>
-      <p>JOIN US!</p>
-      <div class="img-box">
-        <img :src="imgSrc" alt="切换图片">
+    <div class="box">
+      <div class="pre-box" :style="{ transform: preBoxTransform, backgroundColor: preBoxBackgroundColor }">
+        <h1>WELCOME</h1>
+        <p>JOIN US!</p>
+        <div class="img-box">
+          <img :src="imgSrc" alt="切换图片">
+        </div>
       </div>
-    </div>
-    <div class="register-form">
-      <div class="title-box">
-        <h1>注册</h1>
+      <div class="register-form">
+        <div class="title-box">
+          <h1>注册</h1>
+        </div>
+        <div class="input-box">
+          <input type="text" placeholder="邮箱" v-model="registerForm.email">
+          <div class="verification-code-box">
+            <input type="text" placeholder="验证码" v-model="registerForm.verificationCode" class="verification-code-input">
+            <button @click="sendVerificationCode" :disabled="isSending" class="send-code-button">{{ sendBtnText }}</button>
+          </div>
+          <input type="text" placeholder="用户名(麻烦输入真实姓名哦~)" v-model="registerForm.userName">
+          <input type="text" placeholder="昵称(用于帖子名称显示~）" v-model="registerForm.nickName">
+          <input type="password" placeholder="密码(暂不支持由邮箱找回密码~)" v-model="registerForm.password">
+          <input type="password" placeholder="请确认密码" v-model="registerForm.repeatPassword">
+        </div>
+        <div class="btn-box">
+          <button @click="handleRegister">注册</button>
+          <p @click="switchForm">已有账号?去登录</p>
+        </div>
       </div>
-      <div class="input-box">
-        <input type="text" placeholder="邮箱" v-model="registerForm.email">
-        <input type="text" placeholder="验证码" v-model="registerForm.verificationCode">
-        <input type="text" placeholder="用户名" v-model="registerForm.userName">
-        <input type="text" placeholder="昵称" v-model="registerForm.nickName">
-        <input type="password" placeholder="密码" v-model="registerForm.password">
-        <input type="password" placeholder="请确认密码" v-model="registerForm.repeatPassword">
-      </div>
-      <div class="btn-box">
-        <button @click="handleRegister">注册</button>
-        <button @click="sendVerificationCode">发送验证码</button>
-        <p @click="switchForm">已有账号?去登录</p>
-      </div>
-    </div>
-    <div class="login-form">
-      <div class="title-box">
-        <h1>登录</h1>
-      </div>
-      <div class="input-box">
-        <input type="text" placeholder="邮箱" v-model="loginForm.email">
-        <input type="password" placeholder="密码" v-model="loginForm.password">
-      </div>
-      <div class="btn-box">
-        <button @click="handleLogin">登录</button>
-        <p @click="switchForm">没有账号?去注册</p>
+      <div class="login-form">
+        <div class="title-box">
+          <h1>登录</h1>
+        </div>
+        <div class="input-box">
+          <input type="text" placeholder="邮箱" v-model="loginForm.email">
+          <input type="password" placeholder="密码" v-model="loginForm.password">
+        </div>
+        <div class="btn-box">
+          <button @click="handleLogin">登录</button>
+          <p @click="switchForm">没有账号?去注册</p>
+        </div>
       </div>
     </div>
   </div>
-  </div>
-<!--  <div class="bubble-container"></div>-->
+  <!--  <div class="bubble-container"></div>-->
 </template>
 
 <script setup>
-import {ref, reactive, onMounted, onUnmounted} from 'vue';
+import { ref, reactive, onMounted, onUnmounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import request from "@/utils/request.js";
 import { useRouter } from 'vue-router';
@@ -102,6 +104,8 @@ let countdown = 60;
 
 // 发送验证码
 const sendVerificationCode = async () => {
+  if (isSending.value) return; // 如果正在发送中，则阻止重复点击
+
   if (!registerForm.email) {
     ElMessage.warning('请输入邮箱地址');
     return;
@@ -114,7 +118,7 @@ const sendVerificationCode = async () => {
 
     if (response.data.code === 200) {
       ElMessage.success('验证码已发送');
-      // startCountdown();
+      startCountdown(); // 启动倒计时
     } else {
       ElMessage.error(response.data.message);
     }
@@ -127,15 +131,18 @@ const sendVerificationCode = async () => {
 // 倒计时处理
 const startCountdown = () => {
   isSending.value = true;
-  const timer = setInterval(() => {
-    countdown--;
-    sendBtnText.value = `${countdown}秒后重发`;
+  let currentCountdown = countdown; // 使用局部变量，避免和全局变量冲突
+  sendBtnText.value = `${currentCountdown}秒后重发`;
 
-    if (countdown <= 0) {
+  const timer = setInterval(() => {
+    currentCountdown--;
+    sendBtnText.value = `${currentCountdown}秒后重发`;
+
+    if (currentCountdown <= 0) {
       clearInterval(timer);
       isSending.value = false;
       sendBtnText.value = "发送验证码";
-      countdown = 60;
+      currentCountdown = countdown; // 倒计时结束后重置
     }
   }, 1000);
 };
@@ -162,7 +169,7 @@ const handleRegister = async () => {
     ElMessage.warning('请输入验证码');
     return;
   }
-//先验证验证码
+  //先验证验证码
   try {
     const verifyResponse = await request.post(
         `/email/verifyEmail?email=${registerForm.email}&code=${registerForm.verificationCode}`
@@ -175,12 +182,12 @@ const handleRegister = async () => {
     const registerResponse = await request.post(
         '/user/register',
         {
-            email: registerForm.email,
-            userName: registerForm.userName,
-            password: registerForm.password,
-            repeatPassword: registerForm.repeatPassword,
-            nickName: registerForm.nickName
-          },
+          email: registerForm.email,
+          userName: registerForm.userName,
+          password: registerForm.password,
+          repeatPassword: registerForm.repeatPassword,
+          nickName: registerForm.nickName
+        },
     )
     ElMessage.success('注册成功~');
     switchForm();
@@ -211,13 +218,13 @@ const handleLogin = async () => {
   }
   try {
     const response = await request.post('/user/login', {
-        email: loginForm.email,
-        password: loginForm.password
+      email: loginForm.email,
+      password: loginForm.password
     });
-    if(response.data.code === 200){
+    if (response.data.code === 200) {
       localStorage.setItem('token', response.data.data.authorization);
       ElMessage.success('登录成功~');
-    }else {
+    } else {
       ElMessage.error(response.data.message);
     }
     router.push('/home');
@@ -253,6 +260,62 @@ const handleLogin = async () => {
 </script>
 
 <style scoped> /* 不要取消scoped*/
+/*验证码按钮*/
+.verification-code-box {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  width: 60%; /* 使用100%宽度与其他输入框保持一致 */
+}
+
+.verification-code-input {
+  flex: 1; /* 让输入框占据剩余空间 */
+  margin-top: 15px;
+  height: 40px;
+  text-indent: 10px;
+  border: 1px solid #BDBDBD;
+  background-color: rgba(255, 255, 255, 0.6);
+  border-radius: 120px;
+  backdrop-filter: blur(10px);
+  color: #212121;
+  outline: none;
+  box-sizing: border-box;
+  margin-right: 10px;
+}
+
+.verification-code-input:focus {
+  color: #1565C0;
+}
+
+.verification-code-input:focus::placeholder {
+  opacity: 0;
+}
+
+.send-code-button {
+  width: auto; /* 根据内容自适应宽度 */
+  min-width: 110px; /* 设置最小宽度确保按钮不会太窄 */
+  height: 40px; /* 与输入框高度一致 */
+  padding: 0 12px;
+  background-color: #409EFF;
+  color: white;
+  border: none;
+  border-radius: 120px; /* 与输入框保持一致的圆角 */
+  cursor: pointer;
+  transition: background-color 0.3s;
+  box-sizing: border-box;
+  font-size: 14px; /* 适当的字体大小 */
+  white-space: nowrap; /* 防止文字换行 */
+}
+
+.send-code-button:hover {
+  background-color: #66b1ff;
+}
+
+.send-code-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -266,9 +329,7 @@ const handleLogin = async () => {
   justify-content: center;
 }
 
-input {
-  outline: none;
-}
+
 
 
 span {

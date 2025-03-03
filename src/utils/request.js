@@ -4,7 +4,7 @@ import { useUserStore } from '@/stores/user'; // 假设使用 Pinia 存储用户
 
 // 创建axios实例
 const request = axios.create({
-    baseURL: 'http://localhost:58080', // 设置基础URL
+    baseURL: '/', // 设置基础URL
     timeout: 2000, // 请求超时时间
     headers: {
         'Content-Type': 'application/json', // 全局设置 Content-Type
