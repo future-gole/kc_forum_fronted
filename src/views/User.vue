@@ -5,10 +5,23 @@
       <div class="profile-info">
         <div class="avatar-container">
           <img
-              :src="userData.avatarUrl ? avatarBaseURL + userData.avatarUrl : defaultAvatar"
+              :src="avatarImage"
               :alt="userData.nickName"
               class="avatar"
           />
+          <div
+              v-if="isCurrentUser"
+              class="avatar-overlay"
+              @click="openFileDialog"
+          >
+            <input
+                type="file"
+                style="display: none"
+                ref="fileInput"
+                accept="image/*"
+                @change="uploadAvatar"
+            />
+          </div>
         </div>
         <div class="user-details">
           <div class="name-and-actions">
@@ -23,9 +36,9 @@
               <button class="change-pwd-btn" @click="showChangePasswordModal = true">
                 修改密码
               </button>
-              <button class="edit-email-btn" @click="showEditEmailModal = true">
-                修改邮箱
-              </button>
+<!--              <button class="edit-email-btn" @click="showEditEmailModal = true">-->
+<!--                修改邮箱-->
+<!--              </button>-->
             </div>
           </div>
           <div class="stats">
@@ -78,7 +91,7 @@
         <!--文章标签页 with pagination -->
         <div v-else-if="activeTab === 'articles'" class="articles-tab">
           <div v-if="userArticles.length > 0" class="articles-list">
-            <div v-for="article in paginatedArticles" :key="article.id" class="article-item">
+            <div v-for="article in paginatedArticles" :key="article.id" class="article-item" @click="viewArticle(article.id)">
               <h3 class="article-title">{{ article.title }}</h3>
               <div class="article-meta">
                 <span class="article-date">{{ formatDateTime(article.createTime) }}</span>
@@ -199,41 +212,43 @@
       </div>
     </div>
 
-    <!-- 修改邮箱弹窗 -->
-    <div v-if="showEditEmailModal" class="modal-overlay" @click.self="showEditEmailModal = false">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>修改邮箱</h2>
-          <button class="close-button" @click="showEditEmailModal = false">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="code">验证码</label>
-            <input type="text" id="code" v-model="emailForm.code" placeholder="请输入验证码" />
-            <button @click="sendVerificationCode">发送验证码</button>
-          </div>
-          <div class="form-group">
-            <label for="email">新邮箱地址</label>
-            <input type="email" id="email" v-model="emailForm.email" placeholder="请输入新的邮箱地址" />
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-cancel" @click="showEditEmailModal = false">取消</button>
-          <button class="btn btn-primary" @click="updateEmail">保存</button>
-        </div>
-      </div>
-    </div>
+<!--    &lt;!&ndash; 修改邮箱弹窗 &ndash;&gt;-->
+<!--    <div v-if="showEditEmailModal" class="modal-overlay" @click.self="showEditEmailModal = false">-->
+<!--      <div class="modal-content">-->
+<!--        <div class="modal-header">-->
+<!--          <h2>修改邮箱</h2>-->
+<!--          <button class="close-button" @click="showEditEmailModal = false">&times;</button>-->
+<!--        </div>-->
+<!--        <div class="modal-body">-->
+<!--          <div class="form-group">-->
+<!--            <label for="code">验证码</label>-->
+<!--            <input type="text" id="code" v-model="emailForm.code" placeholder="请输入验证码" />-->
+<!--            <button @click="sendVerificationCode">发送验证码</button>-->
+<!--          </div>-->
+<!--          <div class="form-group">-->
+<!--            <label for="email">新邮箱地址</label>-->
+<!--            <input type="email" id="email" v-model="emailForm.email" placeholder="请输入新的邮箱地址" />-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <div class="modal-footer">-->
+<!--          <button class="btn btn-cancel" @click="showEditEmailModal = false">取消</button>-->
+<!--          <button class="btn btn-primary" @click="updateEmail">保存</button>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </div>-->
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watchEffect } from 'vue';
 import { useUserStore } from "@/stores/user.js";
-import { useRoute } from 'vue-router';
+import {useRoute, useRouter} from 'vue-router';
 import request from "@/utils/request.js";
 import { ElMessage } from 'element-plus';
 import {jwtDecode} from "jwt-decode";
+
 const route = useRoute();
+const router = useRouter();
 const userData = ref({});
 const userArticles = ref([]);
 const isLoading = ref(true);
@@ -241,24 +256,81 @@ const activeTab = ref('info');
 // 头像的 baseURL，需要和后端配置的 avatar-base-url 对应
 const avatarBaseURL = 'http://localhost:58080/avatars';
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png';
-
 //获取userStore实例
 const userStore = useUserStore();
-//获取id
-const currentUserId = jwtDecode(localStorage.getItem("token"),{ header: false }).Id
-// 获取路由中的用户id
-const profileUserId = computed(() => route.params.userId);
 
-// 判断是否是当前用户的个人页面
-const isCurrentUser = computed(() => {
-  // console.log("当前用户ID:", currentUserId, typeof currentUserId);
-  // console.log("当前用户ID:", );
-  // console.log("页面用户ID:", profileUserId.value, typeof profileUserId.value);
-
-  // 确保两个ID都转为字符串进行比较
-  return currentUserId && profileUserId.value &&
-      String(currentUserId).trim() === String(profileUserId.value).trim();
+// 1.  统一的当前用户 ID 获取 (从 token 中获取，并处理 token 不存在的情况)
+const currentUserId = computed(() => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    try {
+      const decoded = jwtDecode(token, { header: false });
+      return decoded.Id ? String(decoded.Id) : null; // 确保返回字符串或 null
+    } catch (error) {
+      console.error("JWT decode error:", error);
+      return null;
+    }
+  }
+  return null;
 });
+
+// 2.  简化 isCurrentUser (直接比较 currentUserId 和路由参数)
+const isCurrentUser = computed(() => {
+  //console.log("currentUserId.value",currentUserId.value)
+  //console.log("route.params.userId",route.params.userId)
+  return currentUserId.value === String(route.params.userId);  // 确保类型一致
+});
+
+
+// Computed properties
+const avatarImage = computed(() => {
+  return userData.value.avatarUrl
+      ? avatarBaseURL + userData.value.avatarUrl
+      : defaultAvatar;
+});
+
+// Refs
+const fileInput = ref(null); // 用于触发文件选择框
+
+// Methods
+const openFileDialog = () => {
+  //console.log(isCurrentUser.value)
+  if(isCurrentUser.value) // 确保是当前用户
+    fileInput.value.click(); // 触发文件选择框
+};
+
+const uploadAvatar = async (event) => {
+  const file = event.target.files[0];
+  if (!file) {
+    return; // 用户未选择文件
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const response = await request.post(`/user/uploadAvatar`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    if (response.data.code === 200) {
+      // 更新头像 URL
+      userData.value.avatarUrl = response.data.message.replace(avatarBaseURL, ''); // 后端返回完整的 URL，需要处理一下
+      ElMessage.success('头像上传成功！');
+    } else {
+      ElMessage.success(`头像上传失败: ${response.data.message}`);
+    }
+  } catch (error) {
+    console.error('头像上传出错:', error);
+    ElMessage.error('头像上传出错，请稍后再试。');
+  } finally {
+    // 清空 input[type="file"] 的值，防止选择相同文件时无法触发 change 事件
+    fileInput.value.value = '';
+  }
+};
+
 
 
 
@@ -319,7 +391,7 @@ const updateProfile = async () => {
 
     if (response.data.code === 200) {
       // 更新成功，刷新用户数据
-      await fetchUserData(currentUserId);
+      await fetchUserData(currentUserId.value); // 使用 currentUserId.value
       showEditProfileModal.value = false;
       ElMessage.success('个人资料更新成功');
     } else {
@@ -373,7 +445,7 @@ const updateEmail = async () => {
     // 更新成功后关闭弹窗
     showEditEmailModal.value = false;
     // 刷新用户数据
-    await fetchUserData(currentUserId);
+    await fetchUserData(currentUserId.value);  // 使用 currentUserId.value
     ElMessage.success("更新邮箱成功");
   } catch (error) {
     console.error('更新邮箱失败', error);
@@ -514,18 +586,73 @@ const fetchUserArticles = async (userId) => {
   }
 };
 
+const viewArticle = (articleId) => {
+  if (articleId) {
+    router.push(`/home/article/${articleId}`);
+  }
+}
 //监听路由参数变化
 watchEffect(() => {
-  const userId = Number(route.params.userId)
-  fetchUserData(userId);
+  const userId = route.params.userId; // 保持原始类型
+  if (userId) { // 检查 userId 是否存在
+    fetchUserData(userId);
+  }
 })
 
-// onMounted(() => {
-//   fetchUserData(currentUserId);
-// });
 </script>
 
 <style scoped>
+
+.avatar-container {
+  margin-top: -50px;
+  position: relative;
+  z-index: 2;
+  cursor: pointer; /* 鼠标悬停时显示手型 */
+  transition: transform 0.2s ease-in-out; /* 添加过渡效果 */
+  border-radius: 50%; /* 添加圆角 */
+  border: 4px solid white; /* 添加边框 */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
+  width: 120px;
+  height: 120px;
+}
+
+.avatar {
+  width: 100%; /* 继承 .avatar-container 的宽度 */
+  height: 100%; /* 继承 .avatar-container 的高度 */
+  border-radius: 50%;
+  object-fit: cover;
+  border: none; /* 移除 .avatar 的边框 */
+  box-shadow: none; /* 移除 .avatar 的阴影 */
+  background-color: transparent; /* 移除 .avatar 的背景颜色 */
+}
+
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%; /* 继承 .avatar-container 的宽度 */
+  height: 100%; /* 继承 .avatar-container 的高度 */
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.3); /* 半透明黑色背景，调整透明度 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  opacity: 0; /* 初始状态下隐藏 */
+  transition: opacity 0.3s ease;
+}
+
+.avatar-container:hover .avatar-overlay {
+  opacity: 1; /* 鼠标悬停时显示 */
+}
+
+.avatar-container:active {
+  transform: scale(0.95); /* 点击时缩小到 95% */
+}
+
+
 /* 用户名和操作按钮布局 */
 .name-and-actions {
   display: flex;
@@ -881,21 +1008,7 @@ watchEffect(() => {
   border-radius: 0 0 12px 12px;
 }
 
-.avatar-container {
-  margin-top: -50px;
-  position: relative;
-  z-index: 2;
-}
 
-.avatar {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  border: 4px solid white;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  background-color: #e0e0e0;
-  object-fit: cover;
-}
 
 .user-details {
   padding: 20px 0 0 30px;

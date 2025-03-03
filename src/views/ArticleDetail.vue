@@ -1,5 +1,13 @@
 <template>
   <div class="article-detail-container">
+    <!-- 返回按钮 -->
+    <div class="back-button-container">
+      <button class="back-button" @click="goBack">
+        <el-icon><ArrowLeft /></el-icon>
+        返回
+      </button>
+    </div>
+
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-container">
       <div class="loading-spinner"></div>
@@ -11,9 +19,10 @@
       <span class="error-icon">⚠️</span>
       <div>
         <p>{{ error }}</p>
-        <button @click="fetchArticle">重试</button>
+        <button @click="fetchArticle(article.id)" class="edit-btn">重试</button>
       </div>
     </div>
+
 
     <!-- 文章内容 -->
     <div v-else-if="article" class="article-content">
@@ -38,21 +47,25 @@
           <div class="stats">
             <div class="stat-item">
               <span class="stat-icon">👁️</span>
-              <span>{{ article.viewCount }}</span>
+              <span>{{ article.visitCount }}</span>
             </div>
             <div class="stat-item">
-              <span class="stat-icon">❤️</span>
-              <span>{{ article.likeCount }}</span>
+              <!-- 点赞组件 -->
+              <LikeButton
+                  :targetId="article.id"
+                  targetType="article"
+                  :initialLikeCount="article.likeCount"
+              />
             </div>
           </div>
         </div>
 
         <!-- 操作按钮 -->
         <div v-if="article.own" class="action-buttons">
-          <button class="edit-btn" @click="editArticle">
+          <button class="edit-btn" @click="handleEdit">
             <span class="btn-icon">✏️</span>编辑
           </button>
-          <button class="delete-btn" @click="confirmDelete">
+          <button class="delete-btn" @click="handleDelete">
             <span class="btn-icon">❌</span>删除
           </button>
         </div>
@@ -89,10 +102,31 @@
                 </div>
               </div>
               <div class="comment-actions">
-                <button class="like-btn" @click="likeComment(reply.id)">
-                  <span class="like-icon">❤️</span>
-                  <span>{{ reply.likeCount }}</span>
-                </button>
+                <!-- 评论点赞组件 -->
+                <LikeButton
+                    :targetId="reply.id"
+                    targetType="reply"
+                    :initialLikeCount="reply.likeCount"
+                    @updateLikeCount="(increment) => (reply.likeCount += increment)"
+                />
+                <!-- 删除按钮 - 仅对自己的评论或管理员显示 -->
+                <el-popconfirm
+                    title="确定要删除这条评论吗？"
+                    confirm-button-text="确定"
+                    cancel-button-text="取消"
+                    @confirm="deleteReply(reply.id)"
+                    v-if="canDeleteReply(reply.user.id)"
+                >
+                  <template #reference>
+                    <el-button
+                        type="danger"
+                        size="small"
+                        icon="Delete"
+                        circle
+                        class="delete-button"
+                    ></el-button>
+                  </template>
+                </el-popconfirm>
               </div>
             </div>
             <div class="comment-content">{{ reply.content }}</div>
@@ -105,6 +139,7 @@
               v-model="newComment"
               placeholder="写下你的评论..."
               rows="3"
+              @input="handleComentInput"
           ></textarea>
           <button @click="submitComment" :disabled="!newComment.trim()">
             发表评论
@@ -122,7 +157,9 @@
   import request from '@/utils/request'
   import dayjs from 'dayjs';
   import 'dayjs/locale/zh-cn';
-  import { ElMessage } from 'element-plus';
+  import { ElMessage,ElMessageBox  } from 'element-plus';
+  import { ArrowLeft } from '@element-plus/icons-vue';
+  import LikeButton from '@/components/LikeButton.vue';
 
   // 头像的 baseURL，需要和后端配置的 avatar-base-url 对应
   const avatarBaseURL = 'http://localhost:58080/avatars';
@@ -144,6 +181,25 @@
   //   router.push('/login')
   // }
 
+  // 判断当前用户是否可以删除该评论
+ const canDeleteReply = (id) => {
+
+    return userStore.currentUserId && userStore.currentUserId === id ;
+  };
+
+  const goBack = () => {
+    router.push({
+      name: `Board`,
+      params: { boardId: article.value.boardId },
+      query: { title: boardTitle.value }
+    });
+  };
+
+  // 从 URL 查询参数获取板块标题
+  const boardTitle = computed(() => {
+    return route.query.title || '板块';
+  });
+
   // 导航到用户个人页面的函数
   const navigateToUserProfile = (userId) => {
     if (userId) {
@@ -163,7 +219,29 @@
   const formatDate = (dateString) => {
     return dayjs(dateString).locale('zh-cn').format('YYYY年MM月DD日 HH:mm');
   };
-  
+
+  // 删除评论
+  const deleteReply = async (replyId) => {
+    // 调用API删除评论
+    try{
+
+      const response = await request.post(`/articleReply/deleteArticleReply?articleReplyId=${replyId}&articleId=${article.value.id}`)
+
+        if (response && response.data) {
+          if (response.data.code === 200) {
+            // 从列表中移除已删除的评论
+            ElMessage.success('评论已删除');
+            //刷新评论
+            fetchReplies(article.value.id);
+          } else {
+            ElMessage.error(response.data.message || '删除失败');
+          }
+        }
+      }catch(error) {
+        console.error('删除评论失败:', error);
+        this.$message.error('删除评论失败，请稍后重试');
+      }
+  }
   // 获取文章详情
   const fetchArticle = async (articleId) => {
     try {
@@ -178,7 +256,6 @@
         if (article.value.own === undefined) {
           article.value.own = false
         }
-        console.log(111)
         fetchReplies(articleId);
       } else {
         error.value = '获取文章详情失败'
@@ -200,26 +277,10 @@
       if (response.data.code === 200) {
         replies.value = response.data.data;
       } else {
-        console.error('获取评论失败:', response.message);
+        console.error('获取评论失败:', response.data.message);
       }
     } catch (err) {
       console.error('获取评论失败:', err);
-    }
-  };
-
-  // 点赞评论
-  const likeComment = async (replyId) => {
-    try {
-      const response = await request.post('/articleReply/like', { replyId });
-      if (response.code === 200) {
-        // 点赞成功后刷新评论列表
-        fetchReplies();
-      } else {
-        alert(response.message || '点赞失败');
-      }
-    } catch (err) {
-      alert('网络错误，请稍后重试');
-      console.error('点赞失败:', err);
     }
   };
 
@@ -252,42 +313,123 @@
   watchEffect(() => {
     const articleId = Number(route.params.articleId)
     if (articleId) {
-      article.value = null
-      fetchArticle(articleId)
+      article.value = null;
+      fetchArticle(articleId);
     }
   })
   
   // 删除文章
   const handleDelete = async () => {
-    if (confirm('确定要删除这篇文章吗？')) {
+    ElMessageBox.confirm(
+        '确定要删除这篇帖子吗?',
+        '警告',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }
+    ).then(async () => {
+      // 用户点击了 "确定" 按钮
       try {
-        loading.value = true
-        const response = await request.delete('/article/delete', {
-          params: { articleId: route.params.articleId }
-        })
-        
-        if (response && response.code === 200) {
-          router.push('/home')
+        loading.value = true;
+        const response = await request.post(`/article/deleteArticle?articleId=${article.value.id}`);
+
+        if (response && response.data.code === 200) {
+          ElMessage.success("删除成功~");
+          goBack();
         } else {
-          error.value = response?.message || '删除失败'
+          error.value = response?.message || '删除失败';
+          ElMessage.error(error.value);
         }
       } catch (err) {
-        error.value = err.message || '删除失败'
+        error.value = err.message || '删除失败';
+        ElMessage.error(error.value);
       } finally {
-        loading.value = false
+        loading.value = false;
       }
-    }
-  }
+    }).catch(() => {
+      // 用户点击了 "取消" 按钮
+      ElMessage.info('已取消删除');
+    });
+  };
   
   // 编辑文章
   const handleEdit = () => {
     if (article.value && article.value.id) {
-      router.push(`/article/edit/${article.value.id}`)
+      router.push(`/home/edit-article/${article.value.boardId}/${article.value.id}`)
+    }
+  }
+
+ // 处理标题输入事件
+  const handleComentInput = () => {
+    if (newComment.value.length > 500) {
+      newComment.value = newComment.value.slice(0, 500)
     }
   }
   </script>
   
   <style scoped>
+
+  .comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .delete-button {
+    opacity: 0.7;
+    transition: all 0.2s ease;
+  }
+
+  .delete-button:hover {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+
+  /* 确保移动端也有良好的体验 */
+  @media (max-width: 768px) {
+    .comment-actions {
+      gap: 4px;
+    }
+
+    .delete-button {
+      padding: 4px;
+      font-size: 12px;
+    }
+  }
+
+  .article-detail-container {
+    position: relative;
+  }
+
+  .back-button-container {
+    position: absolute;
+    top: 10px;
+    left: 20px;
+    z-index: 10;
+  }
+
+  .back-button {
+    background-color: transparent;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: #333;
+  }
+
+  .back-button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  /* 调整图标样式 */
+  .el-icon {
+    margin-right: 5px;
+    font-size: 16px;
+  }
   /* 文章详情页样式 - 蓝色主题 */
   .article-detail-container {
     /* 颜色变量 */
@@ -358,6 +500,8 @@
     background-color: var(--ad-card-background);
     border-radius: 12px;
     box-shadow: 0 4px 20px var(--ad-shadow-color);
+    word-break: break-word;
+    overflow-wrap: break-word;
     overflow: hidden;
   }
 

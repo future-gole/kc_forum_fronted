@@ -73,17 +73,16 @@
             </div>
 
             <div class="article-stats">
-              <div class="stat-item">
+              <div class="stat-item" style="color: #409EFF;">
                 <el-icon><View /></el-icon>
                 <span>{{ article.visitCount || 0 }}</span>
               </div>
-              <div class="stat-item">
+              <div class="stat-item" style="color: #409EFF;">
                 <el-icon><ChatDotRound /></el-icon>
                 <span>{{ article.replyCount || 0 }}</span>
               </div>
-              <div class="stat-item">
-                <el-icon><Star /></el-icon>
-                <span>{{ article.likeCount || 0 }}</span>
+              <div class="stat-item" style="color: #409EFF;">
+                <span>❤  {{ article.likeCount || 0 }}</span>
               </div>
             </div>
           </el-card>
@@ -110,7 +109,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { View, ChatDotRound, Star, Plus } from '@element-plus/icons-vue';
+import {View, ChatDotRound, Star, Plus, SuccessFilled, Check} from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/zh-cn';
@@ -232,7 +231,7 @@ const fetchArticles = async () => {
 //文章详情页
 const viewArticle = (articleId) => {
   if (articleId) {
-    router.push(`/home/article/${articleId}`);
+    router.push(`/home/article/${articleId}?title=${encodeURIComponent(boardTitle.value)}`);
   }
 };
 //用户界面

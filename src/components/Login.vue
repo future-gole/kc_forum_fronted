@@ -182,7 +182,7 @@ const handleRegister = async () => {
             nickName: registerForm.nickName
           },
     )
-    ElMessage.success('注册成功');
+    ElMessage.success('注册成功~');
     switchForm();
   } catch (error) {
     console.error('注册失败', error);
@@ -216,7 +216,7 @@ const handleLogin = async () => {
     });
     if(response.data.code === 200){
       localStorage.setItem('token', response.data.data.authorization);
-      ElMessage.success('登录成功');
+      ElMessage.success('登录成功~');
     }else {
       ElMessage.error(response.data.message);
     }

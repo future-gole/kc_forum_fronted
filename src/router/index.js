@@ -5,6 +5,8 @@ import ArticleDetail from '@/views/ArticleDetail.vue';
 import Login from "@/components/Login.vue";
 import EditView from '@/views/EditView.vue';
 import User from '@/views/User.vue';
+import Demo from "@/views/demo.vue";
+
 
 const routes = [
   {
@@ -40,10 +42,23 @@ const routes = [
         component: EditView,
         props: true // 启用 props 传递路由参数
       },
+      // 添加编辑文章的路由，使用 props 传递 boardId 和 articleId
+      {
+        path: 'edit-article/:boardId/:articleId',
+        name: 'EditArticle',
+        component: EditView,
+        props: true
+      },
       {
         path: 'user-profile/:userId',
         name: 'User',
         component: User,
+        props: true
+      },
+      {
+        path: 'demo',
+        name: 'Demo',
+        component: Demo,
         props: true
       }
     ]

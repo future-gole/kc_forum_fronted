@@ -1,7 +1,7 @@
 <template>
   <div class="edit-container">
     <div class="edit-card">
-      <h1 class="edit-title">创建新文章</h1>
+      <h1 class="edit-title">{{ isEditMode ? '编辑文章' : '创建新文章' }}</h1>
 
       <div class="board-info">
         <div class="board-badge">
@@ -17,10 +17,10 @@
               v-model="title"
               placeholder="请输入标题..."
               class="title-field"
-              maxlength="100"
+              @input="handleTitleInput"
           />
-          <span class="title-counter" :class="{ 'title-warning': title.length > 80 }">
-            {{ title.length }}/100
+          <span class="title-counter" :class="{ 'title-warning': title.length > 50 }">
+            {{ title.length }}/50
           </span>
         </div>
 
@@ -60,13 +60,13 @@
           <div class="toolbar-divider"></div>
 
           <div class="toolbar-group">
-            <button
-                @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
-                :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }"
-                title="标题"
-            >
-              <i class="fas fa-heading"></i>
-            </button>
+                        <button
+                            @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
+                            :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }"
+                            title="标题"
+                        >
+                          <i class="fas fa-heading"></i>
+                        </button>
             <button
                 @click="editor.chain().focus().toggleBulletList().run()"
                 :class="{ 'is-active': editor.isActive('bulletList') }"
@@ -99,19 +99,19 @@
             >
               <i class="fas fa-minus"></i>
             </button>
-            <button
-                @click="addImage"
-                title="插入图片"
-            >
-              <i class="fas fa-image"></i>
-            </button>
-            <button
-                @click="addLink"
-                :class="{ 'is-active': editor.isActive('link') }"
-                title="插入链接"
-            >
-              <i class="fas fa-link"></i>
-            </button>
+            <!--            <button-->
+            <!--                @click="addImage"-->
+            <!--                title="插入图片"-->
+            <!--            >-->
+            <!--              <i class="fas fa-image"></i>-->
+            <!--            </button>-->
+            <!--            <button-->
+            <!--                @click="addLink"-->
+            <!--                :class="{ 'is-active': editor.isActive('link') }"-->
+            <!--                title="插入链接"-->
+            <!--            >-->
+            <!--              <i class="fas fa-link"></i>-->
+            <!--            </button>-->
             <button
                 @click="editor.chain().focus().undo().run()"
                 :disabled="!editor.can().undo()"
@@ -151,7 +151,7 @@
             :disabled="isSubmitting || !canSubmit"
         >
           <i class="fas fa-paper-plane"></i>
-          {{ isSubmitting ? '发布中...' : '发布文章' }}
+          {{ isSubmitting ? '发布中...' : (isEditMode ? '更新文章' : '发布文章') }}
         </button>
       </div>
     </div>
@@ -166,7 +166,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
-import { ElMessage } from 'element-plus';
+import {ElMessage, ElMessageBox} from 'element-plus';
 import request from "@/utils/request.js";
 
 
@@ -175,6 +175,10 @@ const props = defineProps({
   boardId: {
     type: String,
     required: true
+  },
+  articleId: {
+    type: String,
+    default: null //  articleId  可能为空，因为它可以用于创建新文章
   }
 })
 
@@ -183,6 +187,11 @@ const editor = ref(null)
 const boardName = ref('')
 const isSubmitting = ref(false)
 const contentLength = ref(0)
+const article = ref(null)
+
+// 初始文章标题和内容
+const initialTitle = ref('')
+const initialContent = ref('')
 
 // Route and router
 const route = useRoute();
@@ -193,9 +202,16 @@ const boardTitle = computed(() => {
   return route.query.title || '板块';
 });
 
+// 是否为编辑模式
+const isEditMode = computed(() => !!props.articleId)
 
 // 计算属性：是否可以提交
 const canSubmit = computed(() => {
+  // 标题和内容都未修改时，不能提交
+  if (isEditMode.value && title.value.trim() === initialTitle.value && editor.value?.getHTML() === initialContent.value) {
+    return false
+  }
+
   return title.value.trim() &&
       contentLength.value > 0 &&
       contentLength.value <= 10000 &&
@@ -225,7 +241,7 @@ onMounted(() => {
         }
       }),
       Placeholder.configure({
-        placeholder: '开始编写精彩内容...',
+        placeholder: '开始发帖吧~~',
         emptyEditorClass: 'is-editor-empty',
       }),
     ],
@@ -244,6 +260,11 @@ onMounted(() => {
 
   // 获取板块信息
   fetchBoardInfo()
+
+  // 如果是编辑模式，则加载文章数据
+  if (isEditMode.value) {
+    fetchArticleData()
+  }
 
   // 自动聚焦标题
   setTimeout(() => {
@@ -278,60 +299,86 @@ const fetchBoardInfo = async () => {
   }
 }
 
-// 添加图片功能
-const addImage = () => {
-  // 创建文件选择器
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.accept = 'image/*'
+// 获取文章详情的函数
+const fetchArticleData = async () => {
+  try {
+    const response = await request.get(`/article/getArticleDetailById?articleId=${props.articleId}`)
+    if (response.data.code === 200) {
+      article.value = response.data.data
+      title.value = article.value.title
+      editor.value.commands.setContent(article.value.content)
 
-  input.onchange = async (event) => {
-    const file = event.target.files[0]
-    if (file) {
-      // 使用 FileReader 读取文件为 base64
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const result = e.target.result
-        // 插入图片
-        editor.value.chain().focus().setImage({ src: result }).run()
-      }
-      reader.readAsDataURL(file)
+      // 记录初始标题和内容
+      initialTitle.value = article.value.title
+      initialContent.value = article.value.content
+    } else {
+      ElMessage.error('获取文章失败')
     }
+  } catch (error) {
+    console.error('获取文章失败:', error)
+    ElMessage.error('获取文章失败')
   }
-
-  input.click()
 }
+//
+// // 添加图片功能
+// const addImage = () => {
+//   // 创建文件选择器
+//   const input = document.createElement('input')
+//   input.type = 'file'
+//   input.accept = 'image/*'
+//
+//   input.onchange = async (event) => {
+//     const file = event.target.files[0]
+//     if (file) {
+//       // 使用 FileReader 读取文件为 base64
+//       const reader = new FileReader()
+//       reader.onload = (e) => {
+//         const result = e.target.result
+//         // 插入图片
+//         editor.value.chain().focus().setImage({ src: result }).run()
+//       }
+//       reader.readAsDataURL(file)
+//     }
+//   }
+//
+//   input.click()
+// }
 
-// 添加链接功能
-const addLink = () => {
-  const previousUrl = editor.value.getAttributes('link').href
-  const url = window.prompt('输入链接URL', previousUrl)
-
-  // 取消或为空时删除链接
-  if (url === null) {
-    return
-  }
-
-  // 为空时删除链接
-  if (url === '') {
-    editor.value.chain().focus().extendMarkRange('link').unsetLink().run()
-    return
-  }
-
-  // 更新链接
-  editor.value.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
-}
+// // 添加链接功能
+// const addLink = () => {
+//   const previousUrl = editor.value.getAttributes('link').href
+//   const url = window.prompt('输入链接URL', previousUrl)
+//
+//   // 取消或为空时删除链接
+//   if (url === null) {
+//     return
+//   }
+//
+//   // 为空时删除链接
+//   if (url === '') {
+//     editor.value.chain().focus().extendMarkRange('link').unsetLink().run()
+//     return
+//   }
+//
+//   // 更新链接
+//   editor.value.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+// }
 
 // 返回上一页
 const goBack = () => {
-  if (contentLength.value > 0 || title.value.trim()) {
-    if (confirm('您有未保存的内容，确定要离开吗？')) {
+    ElMessageBox.confirm(
+        '你的修改未保存，确定要离开吗？',
+        '警告',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }
+    ).then(async () => {
+      // 用户点击了 "确定" 按钮
       router.back()
-    }
-  } else {
-    router.back()
+    });
   }
-}
 
 // 提交文章
 const submitArticle = async () => {
@@ -358,26 +405,50 @@ const submitArticle = async () => {
   try {
     // 获取编辑器内容
     const content = editor.value.getHTML()
+    //编辑文章
+    if(isEditMode.value){
+      const response = await request.post('/article/updateArticle',{
+        title: title.value,
+        content: content,
+        id: props.articleId
+      })
+      // 处理响应
+      if (response.data.code === 200) {
+        // 使用更友好的提示
+        ElMessage.success("修改成功~");
+        // 发布成功后返回板块页面
+        router.push(`/home/board/${props.boardId}`)
+      }else ElMessage.error(response.data.message);
 
-    // 调用创建文章 API
-    const response = await request.post('/article/create', {
-      title: title.value,
-      content: content,
-      boardId: props.boardId
-    })
+    } else {
+      // 调用创建文章 API
+      const response = await request.post('/article/create', {
+        title: title.value,
+        content: content,
+        boardId: props.boardId
+      })
 
-    // 处理响应
-    if (response.data.code === 200) {
-          // 使用更友好的提示
-          ElMessage.success("发布成功~");
-          // 发布成功后返回板块页面
-          router.push(`/home/board/${props.boardId}`)
-        }
+      // 处理响应
+      if (response.data.code === 200) {
+        // 使用更友好的提示
+        ElMessage.success("发布成功~");
+        // 发布成功后返回板块页面
+        router.push(`/home/board/${props.boardId}`)
+      }
+      else ElMessage.error(response.data.message);
+    }
     } catch (error) {
     console.error('提交失败:', error)
-    alert('发布失败，请稍后重试')
+    ElMessage.error('发布失败，请稍后重试')
   } finally {
     isSubmitting.value = false
+  }
+}
+
+// 处理标题输入事件
+const handleTitleInput = () => {
+  if (title.value.length > 50) {
+    title.value = title.value.slice(0, 50)
   }
 }
 </script>
@@ -469,9 +540,13 @@ const submitArticle = async () => {
 .title-input {
   position: relative;
   border-bottom: 1px solid #e2e8f0;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .title-field {
+  word-break: break-word;
+  overflow-wrap: break-word;
   width: 100%;
   padding: 1.25rem 1rem;
   font-size: 1.25rem;
@@ -546,7 +621,7 @@ const submitArticle = async () => {
 
 .editor-toolbar button.is-active {
   background-color: #ebf8ff;
-  color: #3182ce;
+  color: #2171E5;
 }
 
 .editor-toolbar button:disabled {
@@ -558,16 +633,20 @@ const submitArticle = async () => {
   font-size: 1rem;
 }
 
-/* 编辑器内容区域 */
-.editor-content-wrapper {
-  position: relative;
-  background-color: #fff;
+/* 编辑器内容区域基础样式 */
+.editor-content {
+  padding: 1rem;
+  min-height: 200px;
+  line-height: 1.5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  color: #333;
+  outline: none;
 }
 
-.editor-content {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
-  color: #2d3748;
-  line-height: 1.6;
+/* 编辑器获得焦点时的样式 */
+.editor-content:focus {
+  border-color: #4dabf7;
+  box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.2);
 }
 
 /* 字数统计 */
@@ -720,11 +799,18 @@ const submitArticle = async () => {
 }
 
 /* 编辑器内容样式补充 */
-.editor-content .ProseMirror {
+/* .editor-content .ProseMirror {
+  min-height: 300px;
+  padding: 1.25rem;
+  outline: none;
+} */
+
+.editor-content-wrapper .ProseMirror { /* 更精确的选择器 */
   min-height: 300px;
   padding: 1.25rem;
   outline: none;
 }
+
 
 .editor-content .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
@@ -765,6 +851,8 @@ const submitArticle = async () => {
   border: none;
   border-top: 2px solid #e2e8f0;
   margin: 1.5rem 0;
+  height: 1px;
+  background: transparent;
 }
 
 .editor-content .ProseMirror h1 {
@@ -804,7 +892,7 @@ const submitArticle = async () => {
 
 .editor-content .ProseMirror ul,
 .editor-content .ProseMirror ol {
-  padding-left: 1.5rem;
+  padding-left: 2rem;
   margin: 1rem 0;
 }
 
