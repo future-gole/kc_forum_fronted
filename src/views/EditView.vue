@@ -15,144 +15,121 @@
         <div class="title-input">
           <input
               v-model="title"
-              placeholder="请输入标题..."
+              placeholder="请输入标题 (最多 50 字)"
               class="title-field"
               @input="handleTitleInput"
+              maxlength="50"
           />
-          <span class="title-counter" :class="{ 'title-warning': title.length > 50 }">
+          <span class="title-counter" :class="{ 'title-warning': title.length >= 50 }">
             {{ title.length }}/50
           </span>
         </div>
 
-        <!-- 工具栏 -->
-        <div class="editor-toolbar" v-if="editor">
-          <div class="toolbar-group">
-            <button
-                @click="editor.chain().focus().toggleBold().run()"
-                :class="{ 'is-active': editor.isActive('bold') }"
-                title="粗体"
-            >
-              <i class="fas fa-bold"></i>
-            </button>
-            <button
-                @click="editor.chain().focus().toggleItalic().run()"
-                :class="{ 'is-active': editor.isActive('italic') }"
-                title="斜体"
-            >
-              <i class="fas fa-italic"></i>
-            </button>
-            <button
-                @click="editor.chain().focus().toggleStrike().run()"
-                :class="{ 'is-active': editor.isActive('strike') }"
-                title="删除线"
-            >
-              <i class="fas fa-strikethrough"></i>
-            </button>
-            <button
-                @click="editor.chain().focus().toggleCode().run()"
-                :class="{ 'is-active': editor.isActive('code') }"
-                title="代码"
-            >
-              <i class="fas fa-code"></i>
-            </button>
+        <!-- 分割线 -->
+        <hr class="divider" />
+
+        <!-- 编辑器区域 -->
+        <div class="editor-area">
+          <!-- 桌面端工具栏 -->
+          <div class="editor-toolbar desktop-toolbar" v-if="editor && !isMobile">
+            <!-- Formatting -->
+            <button @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }" title="粗体"><i class="fas fa-bold"></i></button>
+            <button @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }" title="斜体"><i class="fas fa-italic"></i></button>
+            <button @click="editor.chain().focus().toggleStrike().run()" :class="{ 'is-active': editor.isActive('strike') }" title="删除线"><i class="fas fa-strikethrough"></i></button>
+            <button @click="editor.chain().focus().toggleCode().run()" :class="{ 'is-active': editor.isActive('code') }" title="行内代码"><i class="fas fa-code"></i></button>
+            <button @click="editor.chain().focus().toggleHighlight().run()" :class="{ 'is-active': editor.isActive('highlight') }" title="高亮"><i class="fas fa-highlighter"></i></button>
+            <div class="toolbar-divider"></div>
+            <!-- Headings -->
+            <button @click="editor.chain().focus().toggleHeading({ level: 1 }).run()" :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }" title="H1"><i class="fas fa-heading"></i>1</button>
+            <button @click="editor.chain().focus().toggleHeading({ level: 2 }).run()" :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }" title="H2"><i class="fas fa-heading"></i>2</button>
+            <button @click="editor.chain().focus().toggleHeading({ level: 3 }).run()" :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }" title="H3"><i class="fas fa-heading"></i>3</button>
+            <div class="toolbar-divider"></div>
+            <!-- Lists -->
+            <button @click="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': editor.isActive('bulletList') }" title="无序列表"><i class="fas fa-list-ul"></i></button>
+            <button @click="editor.chain().focus().toggleOrderedList().run()" :class="{ 'is-active': editor.isActive('orderedList') }" title="有序列表"><i class="fas fa-list-ol"></i></button>
+            <div class="toolbar-divider"></div>
+            <!-- Blocks -->
+            <button @click="editor.chain().focus().toggleBlockquote().run()" :class="{ 'is-active': editor.isActive('blockquote') }" title="引用"><i class="fas fa-quote-right"></i></button>
+            <button @click="editor.chain().focus().toggleCodeBlock().run()" :class="{ 'is-active': editor.isActive('codeBlock') }" title="代码块"><i class="fas fa-file-code"></i></button>
+            <button @click="editor.chain().focus().setHorizontalRule().run()" title="分割线"><i class="fas fa-minus"></i></button>
+            <div class="toolbar-divider"></div>
+            <!-- Table -->
+            <button @click="editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()" title="插入表格"><i class="fas fa-table"></i></button>
+            <button @click="editor.chain().focus().addColumnBefore().run()" :disabled="!editor.can().addColumnBefore()" title="向前插入列"><i class="fas fa-columns"></i>+</button>
+            <button @click="editor.chain().focus().addColumnAfter().run()" :disabled="!editor.can().addColumnAfter()" title="向后插入列">+<i class="fas fa-columns"></i></button>
+            <button @click="editor.chain().focus().deleteColumn().run()" :disabled="!editor.can().deleteColumn()" title="删除列"><i class="fas fa-trash-alt"></i><i class="fas fa-columns"></i></button>
+            <button @click="editor.chain().focus().addRowBefore().run()" :disabled="!editor.can().addRowBefore()" title="向前插入行"><i class="fas fa-grip-lines"></i>+</button>
+            <button @click="editor.chain().focus().addRowAfter().run()" :disabled="!editor.can().addRowAfter()" title="向后插入行">+<i class="fas fa-grip-lines"></i></button>
+            <button @click="editor.chain().focus().deleteRow().run()" :disabled="!editor.can().deleteRow()" title="删除行"><i class="fas fa-trash-alt"></i><i class="fas fa-grip-lines"></i></button>
+            <button @click="editor.chain().focus().deleteTable().run()" :disabled="!editor.can().deleteTable()" title="删除表格"><i class="fas fa-trash-alt"></i><i class="fas fa-table"></i></button>
+            <div class="toolbar-divider"></div>
+            <!-- Links/Images -->
+            <button @click="addImage" title="插入图片"><i class="fas fa-image"></i></button>
+            <button @click="addLink" :class="{ 'is-active': editor.isActive('link') }" title="插入链接"><i class="fas fa-link"></i></button>
+            <div class="toolbar-divider"></div>
+             <!-- History -->
+            <button @click="editor.chain().focus().undo().run()" :disabled="!editor.can().undo()" title="撤销"><i class="fas fa-undo"></i></button>
+            <button @click="editor.chain().focus().redo().run()" :disabled="!editor.can().redo()" title="重做"><i class="fas fa-redo"></i></button>
           </div>
 
-          <div class="toolbar-divider"></div>
-
-          <div class="toolbar-group">
-                        <button
-                            @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
-                            :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }"
-                            title="标题"
-                        >
-                          <i class="fas fa-heading"></i>
-                        </button>
-            <button
-                @click="editor.chain().focus().toggleBulletList().run()"
-                :class="{ 'is-active': editor.isActive('bulletList') }"
-                title="无序列表"
-            >
-              <i class="fas fa-list-ul"></i>
-            </button>
-            <button
-                @click="editor.chain().focus().toggleOrderedList().run()"
-                :class="{ 'is-active': editor.isActive('orderedList') }"
-                title="有序列表"
-            >
-              <i class="fas fa-list-ol"></i>
-            </button>
-            <button
-                @click="editor.chain().focus().toggleBlockquote().run()"
-                :class="{ 'is-active': editor.isActive('blockquote') }"
-                title="引用"
-            >
-              <i class="fas fa-quote-right"></i>
-            </button>
+          <!-- 编辑器内容区 -->
+          <div class="editor-content-wrapper">
+            <editor-content :editor="editor" class="editor-content" />
           </div>
 
-          <div class="toolbar-divider"></div>
+          <!-- 移动端工具栏 (固定在底部或内容区下方) -->
+           <div class="mobile-actions" v-if="isMobile">
+             <div class="mobile-toolbar" v-if="editor">
+               <button @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }"><i class="fas fa-bold"></i></button>
+               <button @click="addImage" title="插入图片"><i class="fas fa-image"></i></button>
+               <!-- Add more mobile-specific buttons if needed -->
+               <button @click="editor.chain().focus().undo().run()" :disabled="!editor.can().undo()"><i class="fas fa-undo"></i></button>
+               <button @click="editor.chain().focus().redo().run()" :disabled="!editor.can().redo()"><i class="fas fa-redo"></i></button>
+             </div>
+             <hr class="divider"/>
+             <!-- 类似小红书的操作项 -->
+             <div class="mobile-options">
+               <button class="option-button"><i class="fas fa-hashtag"></i> 话题</button>
+               <button class="option-button"><i class="fas fa-at"></i> 用户</button>
+               <button class="option-button"><i class="fas fa-poll"></i> 投票</button>
+               <button class="option-button"><i class="fas fa-map-marker-alt"></i> 标记地点</button>
+             </div>
+             <div class="mobile-options">
+                <button class="option-button"><i class="fas fa-eye"></i> 公开可见</button>
+                <button class="option-button">高级选项 <i class="fas fa-chevron-right"></i></button>
+             </div>
+           </div>
 
-          <div class="toolbar-group">
-            <button
-                @click="editor.chain().focus().setHorizontalRule().run()"
-                title="分割线"
-            >
-              <i class="fas fa-minus"></i>
-            </button>
-            <!--            <button-->
-            <!--                @click="addImage"-->
-            <!--                title="插入图片"-->
-            <!--            >-->
-            <!--              <i class="fas fa-image"></i>-->
-            <!--            </button>-->
-            <!--            <button-->
-            <!--                @click="addLink"-->
-            <!--                :class="{ 'is-active': editor.isActive('link') }"-->
-            <!--                title="插入链接"-->
-            <!--            >-->
-            <!--              <i class="fas fa-link"></i>-->
-            <!--            </button>-->
-            <button
-                @click="editor.chain().focus().undo().run()"
-                :disabled="!editor.can().undo()"
-                title="撤销"
-            >
-              <i class="fas fa-undo"></i>
-            </button>
-            <button
-                @click="editor.chain().focus().redo().run()"
-                :disabled="!editor.can().redo()"
-                title="重做"
-            >
-              <i class="fas fa-redo"></i>
-            </button>
+          <!-- 字数统计 -->
+          <div class="word-counter" :class="{ 'word-warning': contentLength > 10000 }">
+            {{ contentLength }}/10000 字符
           </div>
         </div>
 
-        <!-- 编辑器内容区 -->
-        <div class="editor-content-wrapper">
-          <editor-content :editor="editor" class="editor-content" />
+        <!-- 底部操作按钮 -->
+        <div class="footer-actions">
+          <div class="left-actions">
+             <span class="board-badge" v-if="!isMobile">
+               <i class="fas fa-clipboard"></i>
+               发布到: {{ boardTitle }}
+             </span>
+             <!-- 移动端可以在这里显示存草稿等 -->
+              <button v-if="isMobile" class="draft-button"><i class="fas fa-save"></i> 存草稿</button>
+          </div>
+          <div class="right-actions">
+            <button @click="goBack" class="cancel-button">
+              <i class="fas fa-times" v-if="!isMobile"></i> {{ isMobile ? '取消' : '取消' }}
+            </button>
+            <button
+                @click="submitArticle"
+                class="submit-button"
+                :disabled="isSubmitting || !canSubmit"
+            >
+              <i class="fas fa-paper-plane"></i>
+              {{ isSubmitting ? '发布中...' : (isEditMode ? '更新' : '发布') }}
+            </button>
+          </div>
         </div>
-
-        <!-- 字数统计 -->
-        <div class="word-counter" :class="{ 'word-warning': contentLength > 8000 }">
-          {{ contentLength }}/10000 字符
-        </div>
-      </div>
-
-      <!-- 操作按钮 -->
-      <div class="action-buttons">
-        <button @click="goBack" class="cancel-button">
-          <i class="fas fa-times"></i> 取消
-        </button>
-        <button
-            @click="submitArticle"
-            class="submit-button"
-            :disabled="isSubmitting || !canSubmit"
-        >
-          <i class="fas fa-paper-plane"></i>
-          {{ isSubmitting ? '发布中...' : (isEditMode ? '更新文章' : '发布文章') }}
-        </button>
       </div>
     </div>
   </div>
@@ -160,17 +137,28 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
-import { useRouter,useRoute } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { Editor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
-import {ElMessage, ElMessageBox} from 'element-plus';
+import Highlight from '@tiptap/extension-highlight'
+import Table from '@tiptap/extension-table'
+import TableRow from '@tiptap/extension-table-row'
+import TableCell from '@tiptap/extension-table-cell'
+import TableHeader from '@tiptap/extension-table-header'
+
+import { ElMessage, ElMessageBox } from 'element-plus';
 import request from "@/utils/request.js";
 
+// Responsive Design Helper
+const isMobile = ref(window.innerWidth < 768);
+const handleResize = () => {
+  isMobile.value = window.innerWidth < 768;
+};
 
-// 接收路由传递的 boardId 参数
+// Props
 const props = defineProps({
   boardId: {
     type: String,
@@ -178,18 +166,16 @@ const props = defineProps({
   },
   articleId: {
     type: String,
-    default: null //  articleId  可能为空，因为它可以用于创建新文章
+    default: null
   }
 })
 
+// Reactive State
 const title = ref('')
 const editor = ref(null)
-const boardName = ref('')
 const isSubmitting = ref(false)
 const contentLength = ref(0)
 const article = ref(null)
-
-// 初始文章标题和内容
 const initialTitle = ref('')
 const initialContent = ref('')
 
@@ -197,311 +183,553 @@ const initialContent = ref('')
 const route = useRoute();
 const router = useRouter()
 
-// 从 URL 查询参数获取板块标题
-const boardTitle = computed(() => {
-  return route.query.title || '板块';
+// Computed Properties
+const boardTitle = computed(() => route.query.title || '默认板块');
+const isEditMode = computed(() => !!props.articleId);
+const canSubmit = computed(() => {
+  const titleChanged = title.value.trim() !== initialTitle.value;
+  const contentChanged = editor.value?.getHTML() !== initialContent.value;
+  const hasContent = title.value.trim() && contentLength.value > 0;
+  const withinLimit = contentLength.value <= 10000 && title.value.length <= 50; // Title limit updated
+
+  if (isEditMode.value) {
+    return (titleChanged || contentChanged) && hasContent && withinLimit;
+  } else {
+    return hasContent && withinLimit;
+  }
 });
 
-// 是否为编辑模式
-const isEditMode = computed(() => !!props.articleId)
+// --- Function Definitions ---
 
-// 计算属性：是否可以提交
-const canSubmit = computed(() => {
-  // 标题和内容都未修改时，不能提交
-  if (isEditMode.value && title.value.trim() === initialTitle.value && editor.value?.getHTML() === initialContent.value) {
-    return false
+const fetchBoardInfo = async () => {
+  // Keep this logic if board info is needed elsewhere or for validation
+  console.log("Fetching info for board:", props.boardId);
+  // Example: try/catch block to fetch board details if needed
+};
+
+const fetchArticleData = async () => {
+  isSubmitting.value = true; // Indicate loading
+  try {
+    const response = await request.get(`/article/getArticleDetailById?articleId=${props.articleId}`);
+    if (response.data.code === 200 && response.data.data) {
+      article.value = response.data.data;
+      title.value = article.value.title;
+      const contentToSet = article.value.content || ''; // Ensure content is not null/undefined
+      editor.value?.commands.setContent(contentToSet, false); // Set content without emitting update initially
+      contentLength.value = editor.value?.storage.characterCount?.characters() ?? editor.value?.getText().length ?? 0; // Recalculate length
+
+      initialTitle.value = title.value;
+      initialContent.value = editor.value?.getHTML() ?? '';
+      console.log("Initial content length:", contentLength.value);
+      console.log("Initial content html:", initialContent.value);
+
+
+    } else {
+      ElMessage.error('获取文章失败: ' + (response.data.message || '未知错误'));
+      router.back(); // Go back if article fetch fails
+    }
+  } catch (error) {
+    console.error('获取文章失败:', error);
+    ElMessage.error('获取文章时发生网络错误');
+    router.back();
+  } finally {
+    isSubmitting.value = false;
   }
+};
 
-  return title.value.trim() &&
-      contentLength.value > 0 &&
-      contentLength.value <= 10000 &&
-      title.value.length <= 100
-})
+const addImage = () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-// 初始化编辑器
+    // Optional: Add size check
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit for base64
+        ElMessage.warning('图片大小不能超过 5MB');
+        return;
+    }
+
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const src = e.target?.result;
+       if (typeof src === 'string') {
+         editor.value?.chain().focus().setImage({ src }).run();
+       }
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+};
+
+const addLink = () => {
+  const previousUrl = editor.value?.getAttributes('link').href;
+  const url = window.prompt('输入链接 URL', previousUrl || 'https://');
+
+  if (url === null) return; // Cancelled
+
+  if (url === '') {
+    editor.value?.chain().focus().extendMarkRange('link').unsetLink().run();
+  } else {
+    editor.value?.chain().focus().extendMarkRange('link').setLink({ href: url, target: '_blank' }).run();
+  }
+};
+
+const goBack = () => {
+  const titleChanged = title.value.trim() !== initialTitle.value;
+   // Use getHTML() for accurate comparison, getText() might miss formatting changes
+  const contentChanged = editor.value?.getHTML() !== initialContent.value;
+
+  if (titleChanged || contentChanged) {
+    ElMessageBox.confirm(
+      '内容尚未保存，确定要离开吗？',
+      '提示',
+      {
+        confirmButtonText: '确定离开',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    ).then(() => {
+      router.back();
+    }).catch(() => {
+      // User cancelled
+    });
+  } else {
+    router.back();
+  }
+};
+
+const submitArticle = async () => {
+  if (!canSubmit.value || isSubmitting.value) return;
+
+  // Final validation checks (although button should be disabled)
+  if (!title.value.trim()) {
+    ElMessage.warning('请输入标题');
+    return;
+  }
+  if (contentLength.value === 0) {
+    ElMessage.warning('请输入内容');
+    return;
+  }
+   if (contentLength.value > 10000 || title.value.length > 50) {
+     ElMessage.warning('标题或内容超出长度限制');
+     return;
+   }
+
+
+  isSubmitting.value = true;
+  const content = editor.value?.getHTML() ?? ''; // Get final HTML content
+
+  try {
+    let response;
+    if (isEditMode.value) {
+      response = await request.post('/article/updateArticle', {
+        id: props.articleId,
+        title: title.value.trim(),
+        content: content,
+      });
+    } else {
+      response = await request.post('/article/create', {
+        boardId: props.boardId,
+        title: title.value.trim(),
+        content: content,
+      });
+    }
+
+    if (response.data.code === 200) {
+      ElMessage.success(isEditMode.value ? '更新成功' : '发布成功');
+       // Reset initial state after successful submission to prevent accidental "unsaved changes" warning
+       initialTitle.value = title.value.trim();
+       initialContent.value = content;
+      router.push(`/home/board/${props.boardId}`);
+    } else {
+      ElMessage.error(response.data.message || (isEditMode.value ? '更新失败' : '发布失败'));
+    }
+  } catch (error) {
+    console.error('提交文章失败:', error);
+    ElMessage.error('提交时发生网络错误，请稍后重试');
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+// Limit title length
+const handleTitleInput = () => {
+  if (title.value.length > 50) {
+    title.value = title.value.slice(0, 50);
+  }
+};
+
+// --- Lifecycle Hooks ---
+
+// Tiptap Editor Setup
 onMounted(() => {
-  // 创建编辑器实例
   editor.value = new Editor({
     extensions: [
       StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3]
-        }
+        heading: { levels: [1, 2, 3] },
+        codeBlock: false, // Keep disabled as we removed CodeBlockLowlight
       }),
       Image.configure({
-        inline: true,
-        allowBase64: true
+        inline: false, // Allow images as block elements
+        allowBase64: true, // Keep base64 for now
       }),
       Link.configure({
         openOnClick: false,
+        autolink: true,
+        linkOnPaste: true,
         HTMLAttributes: {
-          class: 'editor-link',
           rel: 'noopener noreferrer',
           target: '_blank'
         }
       }),
       Placeholder.configure({
-        placeholder: '开始发帖吧~~',
-        emptyEditorClass: 'is-editor-empty',
+        placeholder: ({ node }) => {
+          if (node.type.name === 'heading') {
+            return `标题 ${node.attrs.level}`;
+          }
+          return '开始你的创作吧...';
+        },
+         emptyEditorClass: 'is-editor-empty',
       }),
+      Highlight, // Keep Highlight if needed
+      Table.configure({
+        resizable: true,
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
     ],
     content: '',
     onUpdate: ({ editor }) => {
-      // 计算内容长度
-      const text = editor.getText()
-      contentLength.value = text.length
+      contentLength.value = editor.storage.characterCount?.characters() ?? editor.getText().length; // More reliable count
     },
-    editorProps: {
-      attributes: {
-        class: 'prose prose-blue focus:outline-none',
-      },
-    },
-  })
+     editorProps: {
+       attributes: {
+         class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none', // Use Tailwind Prose classes if available, or define your own
+       },
+     },
+  });
 
-  // 获取板块信息
-  fetchBoardInfo()
-
-  // 如果是编辑模式，则加载文章数据
+  // Fetch initial data
+  fetchBoardInfo(); // NOW this function is defined before being called
   if (isEditMode.value) {
-    fetchArticleData()
+    fetchArticleData();
   }
 
-  // 自动聚焦标题
-  setTimeout(() => {
-    document.querySelector('.title-field')?.focus()
-  }, 100)
-})
+  // Add resize listener
+  window.addEventListener('resize', handleResize);
+  handleResize(); // Initial check
 
-// 组件卸载前销毁编辑器
+  // Autofocus title (consider if needed for mobile)
+   if (!isMobile.value) {
+      setTimeout(() => {
+          document.querySelector('.title-field')?.focus()
+       }, 100);
+    }
+});
+
 onBeforeUnmount(() => {
   if (editor.value) {
-    editor.value.destroy()
+    editor.value.destroy();
   }
-})
+  window.removeEventListener('resize', handleResize);
+});
 
-// 监听 boardId 变化，重新获取板块信息
-watch(() => props.boardId, () => {
-  fetchBoardInfo()
-})
+// Watchers
+watch(() => props.boardId, fetchBoardInfo); // Refetch if boardId changes (e.g., navigation)
 
-// 获取板块信息的函数
-const fetchBoardInfo = async () => {
-  try {
-    // 这里应该调用获取板块详情的 API
-    // 示例: const response = await axios.get(`http://127.0.0.1:58080/board/${props.boardId}`)
-    // boardName.value = response.data.data.name
-
-    // 由于没有提供获取板块详情的 API，这里暂时使用 boardId 作为板块名称
-    boardName.value = `板块 ${props.boardId}`
-  } catch (error) {
-    console.error('获取板块信息失败:', error)
-    boardName.value = '未知板块'
-  }
-}
-
-// 获取文章详情的函数
-const fetchArticleData = async () => {
-  try {
-    const response = await request.get(`/article/getArticleDetailById?articleId=${props.articleId}`)
-    if (response.data.code === 200) {
-      article.value = response.data.data
-      title.value = article.value.title
-      editor.value.commands.setContent(article.value.content)
-
-      // 记录初始标题和内容
-      initialTitle.value = article.value.title
-      initialContent.value = article.value.content
-    } else {
-      ElMessage.error('获取文章失败')
-    }
-  } catch (error) {
-    console.error('获取文章失败:', error)
-    ElMessage.error('获取文章失败')
-  }
-}
-//
-// // 添加图片功能
-// const addImage = () => {
-//   // 创建文件选择器
-//   const input = document.createElement('input')
-//   input.type = 'file'
-//   input.accept = 'image/*'
-//
-//   input.onchange = async (event) => {
-//     const file = event.target.files[0]
-//     if (file) {
-//       // 使用 FileReader 读取文件为 base64
-//       const reader = new FileReader()
-//       reader.onload = (e) => {
-//         const result = e.target.result
-//         // 插入图片
-//         editor.value.chain().focus().setImage({ src: result }).run()
-//       }
-//       reader.readAsDataURL(file)
-//     }
-//   }
-//
-//   input.click()
-// }
-
-// // 添加链接功能
-// const addLink = () => {
-//   const previousUrl = editor.value.getAttributes('link').href
-//   const url = window.prompt('输入链接URL', previousUrl)
-//
-//   // 取消或为空时删除链接
-//   if (url === null) {
-//     return
-//   }
-//
-//   // 为空时删除链接
-//   if (url === '') {
-//     editor.value.chain().focus().extendMarkRange('link').unsetLink().run()
-//     return
-//   }
-//
-//   // 更新链接
-//   editor.value.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
-// }
-
-// 返回上一页
-const goBack = () => {
-    ElMessageBox.confirm(
-        '你的修改未保存，确定要离开吗？',
-        '警告',
-        {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning',
-        }
-    ).then(async () => {
-      // 用户点击了 "确定" 按钮
-      router.back()
-    });
-  }
-
-// 提交文章
-const submitArticle = async () => {
-  // 表单验证
-  if (!title.value.trim()) {
-    alert('请输入标题')
-    return
-  }
-
-  if (contentLength.value === 0) {
-    alert('请输入内容')
-    return
-  }
-
-  if (contentLength.value > 10000) {
-    alert('内容超出字数限制')
-    return
-  }
-
-  // 防止重复提交
-  if (isSubmitting.value) return
-  isSubmitting.value = true
-
-  try {
-    // 获取编辑器内容
-    const content = editor.value.getHTML()
-    //编辑文章
-    if(isEditMode.value){
-      const response = await request.post('/article/updateArticle',{
-        title: title.value,
-        content: content,
-        id: props.articleId
-      })
-      // 处理响应
-      if (response.data.code === 200) {
-        // 使用更友好的提示
-        ElMessage.success("修改成功~");
-        // 发布成功后返回板块页面
-        router.push(`/home/board/${props.boardId}`)
-      }else ElMessage.error(response.data.message);
-
-    } else {
-      // 调用创建文章 API
-      const response = await request.post('/article/create', {
-        title: title.value,
-        content: content,
-        boardId: props.boardId
-      })
-
-      // 处理响应
-      if (response.data.code === 200) {
-        // 使用更友好的提示
-        ElMessage.success("发布成功~");
-        // 发布成功后返回板块页面
-        router.push(`/home/board/${props.boardId}`)
-      }
-      else ElMessage.error(response.data.message);
-    }
-    } catch (error) {
-    console.error('提交失败:', error)
-    ElMessage.error('发布失败，请稍后重试')
-  } finally {
-    isSubmitting.value = false
-  }
-}
-
-// 处理标题输入事件
-const handleTitleInput = () => {
-  if (title.value.length > 50) {
-    title.value = title.value.slice(0, 50)
-  }
-}
 </script>
 
 
 <style scoped>
-/* 主容器样式 */
+/* Base Layout */
 .edit-container {
   display: flex;
   justify-content: center;
-  padding: 2rem 1rem;
+  padding: 1rem; /* Reduced padding for mobile */
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0fd 100%);
+  background-color: #f4f6f8; /* Lighter background */
 }
 
-/* 编辑卡片样式 */
 .edit-card {
   width: 100%;
   max-width: 900px;
   background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 56, 146, 0.08);
-  padding: 2rem;
-  transition: all 0.3s ease;
-}
-
-/* 标题样式 */
-.edit-title {
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: #1a365d;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  position: relative;
-}
-
-.edit-title::after {
-  content: '';
-  position: absolute;
-  bottom: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
-  height: 3px;
-  background: linear-gradient(90deg, #3182ce, #63b3ed);
-  border-radius: 3px;
-}
-
-/* 板块信息样式 */
-.board-info {
-  margin-bottom: 1.5rem;
+  border-radius: 8px; /* Slightly smaller radius */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 1rem; /* Consistent padding */
   display: flex;
-  justify-content: flex-start;
+  flex-direction: column;
+  height: calc(100vh - 2rem); /* Full height minus padding */
+  overflow: hidden; /* Prevent content overflow */
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 0.75rem 0; /* Consistent margin */
+}
+
+/* Title Area */
+.title-section {
+  position: relative;
+  padding-bottom: 0.5rem; /* Space for counter */
+}
+
+.title-field {
+  width: 100%;
+  padding: 0.75rem 0.5rem; /* Adjust padding */
+  font-size: 1.2rem; /* Slightly smaller title */
+  font-weight: 600; /* Bold title */
+  color: #1a202c;
+  border: none;
+  outline: none;
+  background-color: transparent;
+}
+
+.title-field::placeholder {
+  color: #a0aec0;
+  font-weight: 400;
+}
+
+.title-counter {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0;
+  font-size: 0.75rem;
+  color: #718096;
+}
+
+.title-warning {
+  color: #ed8936;
+}
+
+/* Editor Area */
+.editor-area {
+  flex-grow: 1; /* Take remaining space */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Contain editor scrolling */
+}
+
+/* Editor Content */
+.editor-content {
+  flex-grow: 1;
+  overflow-y: auto; /* Allow content to scroll */
+  padding: 0.5rem; /* Padding inside the scroll area */
+  line-height: 1.6;
+  color: #2d3748;
+}
+
+/* Apply styles directly to Tiptap's editable element */
+:deep(.ProseMirror) {
+  min-height: 250px; /* Ensure minimum height */
+  outline: none;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+:deep(.ProseMirror p.is-editor-empty:first-child::before) {
+  content: attr(data-placeholder);
+  float: left;
+  color: #a0aec0;
+  pointer-events: none;
+  height: 0;
+}
+:deep(.ProseMirror table) {
+  border-collapse: collapse;
+  margin: 1rem 0;
+  width: 100%;
+}
+:deep(.ProseMirror th), :deep(.ProseMirror td) {
+  border: 1px solid #dfe2e5;
+  padding: 0.5em 0.75em;
+  vertical-align: top;
+}
+:deep(.ProseMirror th) {
+  font-weight: bold;
+  text-align: left;
+  background-color: #f6f8fa;
+}
+:deep(.ProseMirror .tableWrapper) {
+  overflow-x: auto;
+}
+:deep(.ProseMirror code) {
+  background-color: rgba(99, 110, 123, 0.15);
+  padding: .1em .3em;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+:deep(.ProseMirror pre) {
+  background: #2d2d2d; /* Dark background for code blocks */
+  color: #f8f8f2; /* Light text */
+  font-family: 'JetBrainsMono', 'Fira Code', monospace;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  overflow-x: auto; /* Allow horizontal scroll */
+}
+
+:deep(.ProseMirror pre code) {
+  color: inherit;
+  padding: 0;
+  background: none;
+  font-size: 0.85em;
+}
+:deep(.ProseMirror blockquote) {
+  border-left: 3px solid #cbd5e0;
+  margin: 1rem 0;
+  padding-left: 1rem;
+  color: #4a5568;
+  font-style: italic;
+}
+:deep(.ProseMirror hr) {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 1.5rem 0;
+}
+:deep(.ProseMirror img) {
+    max-width: 100%;
+    height: auto;
+    display: block; /* Or inline-block depending on preference */
+    margin: 1rem auto; /* Center images */
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+ }
+:deep(.ProseMirror a) {
+  color: #3182ce;
+  text-decoration: underline;
+  cursor: pointer;
+}
+:deep(.ProseMirror ul), :deep(.ProseMirror ol) {
+    padding-left: 1.5rem;
+}
+
+
+/* Toolbars */
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0.5rem;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 0.25rem; /* Spacing between buttons */
+}
+
+.editor-toolbar button {
+  display: inline-flex; /* Use inline-flex for better alignment */
+  align-items: center;
+  justify-content: center;
+  width: 32px; /* Smaller buttons */
+  height: 32px;
+  border: none;
+  background-color: transparent;
+  border-radius: 4px;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem; /* Slightly smaller icons */
+}
+
+.editor-toolbar button:hover {
+  background-color: #e2e8f0;
+  color: #1a202c;
+}
+
+.editor-toolbar button.is-active {
+  background-color: #ebf8ff;
+  color: #2b6cb0;
+}
+
+.editor-toolbar button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.toolbar-divider {
+  width: 1px;
+  background-color: #e2e8f0;
+  margin: 0.25rem 0.5rem; /* Adjust margin */
+  align-self: stretch; /* Make divider full height */
+}
+
+
+/* Mobile Specific Styles */
+.mobile-actions {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 0.5rem;
+    background-color: #fff; /* Ensure background */
+}
+
+.mobile-toolbar {
+    display: flex;
+    justify-content: space-around; /* Distribute items */
+    padding: 0.5rem 0;
+    background-color: #f8fafc;
+}
+
+.mobile-toolbar button {
+    width: 40px; /* Slightly larger touch target */
+    height: 40px;
+    font-size: 1rem;
+}
+
+.mobile-options {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0.5rem 0.5rem;
+    gap: 0.5rem;
+}
+
+.option-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background-color: #edf2f7;
+    color: #4a5568;
+    border: none;
+    border-radius: 15px; /* Pill shape */
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+.option-button i {
+    font-size: 0.8rem;
+}
+
+
+/* Word Counter */
+.word-counter {
+  padding: 0.25rem 0.5rem; /* Smaller padding */
+  text-align: right;
+  font-size: 0.75rem; /* Smaller text */
+  color: #718096;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  margin-top: auto; /* Push to bottom within editor-area */
+}
+
+.word-warning {
+  color: #e53e3e;
+}
+
+/* Footer Actions */
+.footer-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem; /* Space above footer */
+  padding-top: 1rem; /* Space inside footer */
+  border-top: 1px solid #e2e8f0;
+}
+
+.left-actions, .right-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* Spacing between buttons */
 }
 
 .board-badge {
@@ -509,180 +737,40 @@ const handleTitleInput = () => {
   align-items: center;
   background-color: #ebf8ff;
   color: #2b6cb0;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.9rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
   font-weight: 500;
-  box-shadow: 0 2px 5px rgba(66, 153, 225, 0.15);
 }
 
 .board-badge i {
-  margin-right: 0.5rem;
-  font-size: 0.85rem;
+  margin-right: 0.4rem;
 }
 
-/* 编辑器包装器 */
-.editor-wrapper {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  overflow: hidden;
-  background-color: #fff;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-}
-
-.editor-wrapper:focus-within {
-  border-color: #4299e1;
-  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
-}
-
-/* 标题输入框 */
-.title-input {
-  position: relative;
-  border-bottom: 1px solid #e2e8f0;
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-.title-field {
-  word-break: break-word;
-  overflow-wrap: break-word;
-  width: 100%;
-  padding: 1.25rem 1rem;
-  font-size: 1.25rem;
-  font-weight: 500;
-  color: #2d3748;
-  border: none;
-  outline: none;
-  background-color: #f8fafc;
-  transition: background-color 0.2s ease;
-}
-
-.title-field:focus {
-  background-color: #fff;
-}
-
-.title-field::placeholder {
-  color: #a0aec0;
-}
-
-.title-counter {
-  position: absolute;
-  right: 1rem;
-  bottom: 0.5rem;
-  font-size: 0.75rem;
-  color: #718096;
-  transition: color 0.2s ease;
-}
-
-.title-warning {
-  color: #ed8936;
-}
-
-/* 工具栏样式 */
-.editor-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 0.5rem;
-  background-color: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  gap: 0.25rem;
-}
-
-.toolbar-group {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.toolbar-divider {
-  width: 1px;
-  background-color: #e2e8f0;
-  margin: 0 0.5rem;
-}
-
-.editor-toolbar button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  background-color: transparent;
-  border-radius: 4px;
-  color: #4a5568;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.editor-toolbar button:hover {
-  background-color: #edf2f7;
-  color: #2b6cb0;
-}
-
-.editor-toolbar button.is-active {
-  background-color: #ebf8ff;
-  color: #2171E5;
-}
-
-.editor-toolbar button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.editor-toolbar button i {
-  font-size: 1rem;
-}
-
-/* 编辑器内容区域基础样式 */
-.editor-content {
-  padding: 1rem;
-  min-height: 200px;
-  line-height: 1.5;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  color: #333;
-  outline: none;
-}
-
-/* 编辑器获得焦点时的样式 */
-.editor-content:focus {
-  border-color: #4dabf7;
-  box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.2);
-}
-
-/* 字数统计 */
-.word-counter {
-  padding: 0.5rem 1rem;
-  text-align: right;
-  font-size: 0.8rem;
-  color: #718096;
-  background-color: #f8fafc;
-  border-top: 1px solid #e2e8f0;
-}
-
-.word-warning {
-  color: #e53e3e;
-}
-
-/* 操作按钮 */
-.action-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.cancel-button {
-  padding: 0.75rem 1.5rem;
-  background-color: #edf2f7;
-  color: #4a5568;
+.draft-button, .cancel-button, .submit-button {
+  padding: 0.6rem 1.2rem; /* Adjust button padding */
   border: none;
   border-radius: 6px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  display: flex;
+  display: inline-flex; /* Use inline-flex */
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  font-size: 0.9rem; /* Adjust font size */
+}
+.draft-button {
+   background-color: #f0f0f0;
+   color: #555;
+}
+.draft-button:hover {
+   background-color: #e0e0e0;
+}
+
+
+.cancel-button {
+  background-color: #edf2f7;
+  color: #4a5568;
 }
 
 .cancel-button:hover {
@@ -690,253 +778,91 @@ const handleTitleInput = () => {
 }
 
 .submit-button {
-  padding: 0.75rem 1.5rem;
   background: linear-gradient(135deg, #3182ce 0%, #4299e1 100%);
   color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  box-shadow: 0 4px 6px rgba(66, 153, 225, 0.15);
+  box-shadow: 0 2px 4px rgba(66, 153, 225, 0.15);
 }
 
 .submit-button:hover {
   background: linear-gradient(135deg, #2c5282 0%, #3182ce 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 8px rgba(66, 153, 225, 0.2);
+  box-shadow: 0 4px 6px rgba(66, 153, 225, 0.2);
 }
 
 .submit-button:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
   box-shadow: none;
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
+/* Responsive Overrides */
+
+/* Hide Desktop Toolbar on Mobile */
+.desktop-toolbar {
+  display: flex; /* Default display */
+}
+.mobile-actions {
+  display: none; /* Hidden by default */
+}
+
+
+@media (max-width: 767px) {
+  .edit-container {
+    padding: 0; /* Full width on mobile */
+     background-color: #ffffff; /* Match card background */
+  }
   .edit-card {
-    padding: 1.5rem;
+    border-radius: 0; /* No radius on mobile */
+    box-shadow: none; /* No shadow */
+    padding: 0.75rem; /* Reduced padding */
+    height: 100vh; /* Full viewport height */
   }
 
-  .edit-title {
-    font-size: 1.5rem;
+  .desktop-toolbar {
+    display: none; /* Hide desktop toolbar */
   }
+  .mobile-actions {
+    display: block; /* Show mobile actions section */
+     margin-top: auto; /* Push to bottom */
+  }
+
 
   .title-field {
-    padding: 1rem;
-    font-size: 1.1rem;
+     font-size: 1.1rem;
+     padding: 0.5rem;
+  }
+   .title-counter {
+     bottom: 0.2rem;
+   }
+
+
+  .editor-content {
+    padding: 0.5rem 0; /* Remove horizontal padding if desired */
+  }
+   :deep(.ProseMirror) {
+     min-height: calc(100vh - 280px); /* Adjust based on other elements' height */
+   }
+
+
+  .footer-actions {
+    padding: 0.75rem; /* Match card padding */
+     background-color: #fff; /* Ensure background */
+      border-top: 1px solid #e2e8f0;
+       position: sticky; /* Make footer sticky */
+       bottom: 0; /* Stick to bottom */
   }
 
-  .editor-toolbar {
-    flex-wrap: wrap;
-    justify-content: center;
+  .cancel-button i {
+     display: none; /* Hide icon on mobile cancel */
   }
+   .submit-button, .cancel-button, .draft-button {
+     padding: 0.5rem 1rem; /* Smaller buttons */
+     font-size: 0.85rem;
+   }
 
-  .toolbar-divider {
-    display: none;
-  }
-
-  .action-buttons {
-    flex-direction: column-reverse;
-  }
-
-  .cancel-button, .submit-button {
-    width: 100%;
-    justify-content: center;
-  }
+   /* Hide board badge on mobile */
+   .board-badge {
+       display: none;
+   }
 }
 
-/* 成功通知样式 */
-.success-notification {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background-color: #48bb78;
-  color: white;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  animation: slide-in 0.3s ease-out forwards;
-}
-
-.success-notification i {
-  font-size: 1.25rem;
-}
-
-.success-notification.fade-out {
-  animation: fade-out 0.5s ease-out forwards;
-}
-
-@keyframes slide-in {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes fade-out {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-}
-
-/* 编辑器内容样式补充 */
-/* .editor-content .ProseMirror {
-  min-height: 300px;
-  padding: 1.25rem;
-  outline: none;
-} */
-
-.editor-content-wrapper .ProseMirror { /* 更精确的选择器 */
-  min-height: 300px;
-  padding: 1.25rem;
-  outline: none;
-}
-
-
-.editor-content .ProseMirror p.is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
-  float: left;
-  color: #a0aec0;
-  pointer-events: none;
-  height: 0;
-}
-
-.editor-content .ProseMirror p {
-  margin: 0.75rem 0;
-}
-
-.editor-content .ProseMirror img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 6px;
-  margin: 1rem 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
-}
-
-.editor-content .ProseMirror img:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.editor-content .ProseMirror blockquote {
-  border-left: 4px solid #4299e1;
-  padding: 0.5rem 0 0.5rem 1rem;
-  color: #4a5568;
-  font-style: italic;
-  margin: 1.25rem 0;
-  background-color: #f7fafc;
-  border-radius: 0 4px 4px 0;
-}
-
-.editor-content .ProseMirror hr {
-  border: none;
-  border-top: 2px solid #e2e8f0;
-  margin: 1.5rem 0;
-  height: 1px;
-  background: transparent;
-}
-
-.editor-content .ProseMirror h1 {
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: #1a365d;
-  margin: 1.5rem 0 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.editor-content .ProseMirror h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #2a4365;
-  margin: 1.5rem 0 1rem;
-}
-
-.editor-content .ProseMirror h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #2c5282;
-  margin: 1.5rem 0 1rem;
-}
-
-.editor-content .ProseMirror a {
-  color: #3182ce;
-  text-decoration: none;
-  border-bottom: 1px solid #90cdf4;
-  transition: all 0.2s ease;
-}
-
-.editor-content .ProseMirror a:hover {
-  color: #2b6cb0;
-  border-bottom-color: #3182ce;
-}
-
-.editor-content .ProseMirror ul,
-.editor-content .ProseMirror ol {
-  padding-left: 2rem;
-  margin: 1rem 0;
-}
-
-.editor-content .ProseMirror li {
-  margin: 0.25rem 0;
-}
-
-.editor-content .ProseMirror code {
-  background-color: #f7fafc;
-  padding: 0.2rem 0.4rem;
-  border-radius: 3px;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  font-size: 0.9em;
-  color: #2d3748;
-  border: 1px solid #edf2f7;
-}
-
-/* 自定义滚动条 */
-.editor-content .ProseMirror::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.editor-content .ProseMirror::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.editor-content .ProseMirror::-webkit-scrollbar-thumb {
-  background: #cbd5e0;
-  border-radius: 4px;
-}
-
-.editor-content .ProseMirror::-webkit-scrollbar-thumb:hover {
-  background: #a0aec0;
-}
-
-/* 编辑器焦点样式 */
-.editor-content .ProseMirror:focus {
-  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.1) inset;
-}
-
-/* 编辑器选中文本样式 */
-.editor-content .ProseMirror ::selection {
-  background-color: rgba(66, 153, 225, 0.2);
-}
 </style>

@@ -8,7 +8,7 @@
               <img src="../assets/kc1.png" alt="Logo">
             </div>
           </div>
-          <div class="text">kec-forum</div>
+          <div class="text">welcome！</div>
         </a>
       </li>
       <!-- 板块列表 -->

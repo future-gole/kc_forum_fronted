@@ -3,9 +3,10 @@ import Home from '../views/Home.vue'
 import BoardView from '@/views/BoardView.vue';
 import ArticleDetail from '@/views/ArticleDetail.vue';
 import Login from "@/components/Login.vue";
+import MobileLogin from "@/components/MobileLogin.vue";
 import EditView from '@/views/EditView.vue';
 import User from '@/views/User.vue';
-import Demo from "@/views/demo.vue";
+
 
 
 const routes = [
@@ -16,7 +17,11 @@ const routes = [
   {
     path: '/login',
     name: 'Login',
-    component: Login
+    component: () => {
+      const isMobile = window.innerWidth < 768;
+      console.log('路由决定使用的登录组件:', isMobile ? 'MobileLogin' : 'Login');
+      return isMobile ? MobileLogin : Login;
+    }
   },
   {
     path: '/home',
@@ -53,12 +58,6 @@ const routes = [
         path: 'user-profile/:userId',
         name: 'User',
         component: User,
-        props: true
-      },
-      {
-        path: 'demo',
-        name: 'Demo',
-        component: Demo,
         props: true
       }
     ]
