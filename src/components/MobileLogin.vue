@@ -3,8 +3,8 @@
     <div class="login-container">
       <div class="login-header">
         <img src="../assets/kc1.png" alt="Logo" class="logo">
-        <h1>欢迎使用 kec-forum</h1>
-        <p class="subtitle">科技与创新的交流平台</p>
+        <h1>欢迎使用 kc-forum</h1>
+        <p class="subtitle">JOIN US!</p>
       </div>
       
       <div class="tabs">
@@ -187,14 +187,14 @@ const handleRegister = async () => {
   
   //先验证验证码
   try {
-    const verifyResponse = await request.post(
-        `/email/verifyEmail?email=${registerForm.email}&code=${registerForm.verificationCode}`
-    );
+    // const verifyResponse = await request.post(
+    //     `/email/verifyEmail?email=${registerForm.email}&code=${registerForm.verificationCode}`
+    // );
     
-    if (verifyResponse.data.code !== 200) {
-      ElMessage.error(verifyResponse.data.message);
-      return;
-    }
+    // if (verifyResponse.data.code !== 200) {
+    //   ElMessage.error(verifyResponse.data.message);
+    //   return;
+    // }
     
     // 验证通过后执行注册
     const registerResponse = await request.post(
@@ -204,7 +204,8 @@ const handleRegister = async () => {
           userName: registerForm.userName,
           password: registerForm.password,
           repeatPassword: registerForm.repeatPassword,
-          nickName: registerForm.nickName
+          nickName: registerForm.nickName,
+          code: registerForm.verificationCode
         },
     )
     ElMessage.success('注册成功~');
@@ -217,8 +218,8 @@ const handleRegister = async () => {
 
 // 登录处理
 const handleLogin = async () => {
-  if (!loginForm.email) {
-    ElMessage.warning('邮箱不能为空');
+  if (!loginForm.email) { // 修改为校验 email
+    ElMessage.warning('邮箱不能为空'); // 修改为提示邮箱
     return;
   }
   if (!loginForm.password) {
@@ -230,19 +231,47 @@ const handleLogin = async () => {
       email: loginForm.email,
       password: loginForm.password
     });
-    console.log(response);
     if (response.data.code === 200) {
       localStorage.setItem('token', response.data.data.authorization);
       ElMessage.success('登录成功~');
-      router.push('/home');
     } else {
       ElMessage.error(response.data.message);
     }
+    router.push('/home');
   } catch (error) {
-    ElMessage.error('登录请求发生错误,请联系管理员~');
-    console.error('登录错误:', error.message, error.response);
+    let errorMessage = '登录请求失败，请稍后再试'; // 默认错误消息
+
+    if (error.response) {
+      // 有服务器响应 (例如 4xx, 5xx 错误)
+      console.log('服务器响应错误:', error.response);
+      if (error.response.data && typeof error.response.data.message === 'string') {
+        // 后端返回了 { "code": XXX, "message": "...", "data": ... } 这样的结构
+        errorMessage = error.response.data.message;
+      } else if (typeof error.response.data === 'string') {
+        // 有些后端可能在错误时直接返回字符串错误信息
+        errorMessage = error.response.data;
+      } else if (error.response.statusText) {
+        // 如果没有 data.message，尝试使用 HTTP 状态文本
+        errorMessage = `错误 ${error.response.status}: ${error.response.statusText}`;
+      }
+    } else if (error.request) {
+      // 请求已发出，但没有收到响应 (例如网络错误)
+      console.log('请求已发出但无响应:', error.request);
+      errorMessage = '网络错误，请检查您的连接';
+    } else {
+      // 发生了一些在设置请求时触发的错误
+      console.log('设置请求时发生错误:', error.message);
+      if (error.message) {
+        errorMessage = error.message;
+      }
+    }
+
+    ElMessage.error(errorMessage);
+    // 保留这个 console.error 用于详细调试
+    console.error('登录完整错误对象:', error);
   }
 };
+
 </script>
 
 <style scoped>

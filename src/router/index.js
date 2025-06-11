@@ -19,7 +19,6 @@ const routes = [
     name: 'Login',
     component: () => {
       const isMobile = window.innerWidth < 768;
-      console.log('路由决定使用的登录组件:', isMobile ? 'MobileLogin' : 'Login');
       return isMobile ? MobileLogin : Login;
     }
   },

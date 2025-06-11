@@ -5,7 +5,7 @@ import { jwtDecode } from 'jwt-decode';
 export const useUserStore = defineStore('user', () => {
     // 使用 ref 创建响应式状态
     const token = ref(localStorage.getItem('token') || null)
-
+    console.log('Initial token from localStorage:', token.value);
     // 使用计算属性动态解析 token
     const decodedToken = computed(() => {
         if (!token.value) return null;
@@ -17,7 +17,7 @@ export const useUserStore = defineStore('user', () => {
         }
     });
 
-    // 计算属性获取用户ID
+    // // 计算属性获取用户ID
     const currentUserId = computed(() => decodedToken.value?.Id || null);
 
     // 计算属性获取用户邮箱

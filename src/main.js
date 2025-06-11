@@ -6,7 +6,9 @@ import '@fortawesome/fontawesome-free/css/all.min.css'
 import App from './App.vue'
 import router from './router'
 // 导入全局响应式样式
-import './assets/responsive.css'
+import './assets/css/responsive.css'
+import './assets/css/tiptap-content.css';
+
 
 
 const pinia = createPinia();

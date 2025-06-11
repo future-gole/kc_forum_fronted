@@ -1,0 +1,65 @@
+.article-body .tiptap-content h1 {
+  font-size: 2em;
+  margin-bottom: 0.5em;
+}
+.article-body .tiptap-content p {
+  line-height: 1.6;
+  margin-bottom: 1em;
+}
+.article-body .tiptap-content ul,
+.article-body .tiptap-content ol {
+  margin-bottom: 1em;
+}
+.article-body .tiptap-content blockquote {
+  border-left: 4px solid #ccc;
+  margin-left: 0;
+  padding-left: 1em;
+  color: #666;
+}
+.article-body .tiptap-content pre {
+  background-color: #f5f5f5;
+  padding: 1em;
+  overflow-x: auto;
+  border-radius: 4px;
+}
+.article-body .tiptap-content code {
+  font-family: monospace;
+  background-color: #f0f0f0;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+}
+.article-body .tiptap-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 1em;
+}
+.article-body .tiptap-content th,
+.article-body .tiptap-content td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+.article-body .tiptap-content th {
+  background-color: #f2f2f2;
+}
+.article-body .tiptap-content img {
+  max-width: 100%;
+  height: auto;
+  display: block; /* 避免图片下方出现空白 */
+  margin: 1em 0;
+}
+.article-body .tiptap-content a {
+  color: #007bff; /* 或你的主题链接颜色 */
+  text-decoration: none;
+}
+.article-body .tiptap-content a:hover {
+  text-decoration: underline;
+}
+/* 如果Tiptap的highlight扩展添加了特定的类，例如 .highlight */
+.article-body .tiptap-content .highlight {
+  background-color: yellow; /* 或者你想要的高亮颜色 */
+}
+.article-body .tiptap-content li::marker {
+  color: #555;
+  font-size: 1em;
+}

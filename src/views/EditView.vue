@@ -10,7 +10,7 @@
         </div>
       </div>
 
-      <div class="editor-wrapper">
+      <div class="editor-wrapper"> 
         <!-- 标题输入框 -->
         <div class="title-input">
           <input
@@ -29,7 +29,7 @@
         <hr class="divider" />
 
         <!-- 编辑器区域 -->
-        <div class="editor-area">
+        <div class="editor-area"> 
           <!-- 桌面端工具栏 -->
           <div class="editor-toolbar desktop-toolbar" v-if="editor && !isMobile">
             <!-- Formatting -->
@@ -64,7 +64,7 @@
             <button @click="editor.chain().focus().deleteTable().run()" :disabled="!editor.can().deleteTable()" title="删除表格"><i class="fas fa-trash-alt"></i><i class="fas fa-table"></i></button>
             <div class="toolbar-divider"></div>
             <!-- Links/Images -->
-            <button @click="addImage" title="插入图片"><i class="fas fa-image"></i></button>
+            <!-- <button @click="addImage" title="插入图片"><i class="fas fa-image"></i></button> -->
             <button @click="addLink" :class="{ 'is-active': editor.isActive('link') }" title="插入链接"><i class="fas fa-link"></i></button>
             <div class="toolbar-divider"></div>
              <!-- History -->
@@ -449,41 +449,49 @@ watch(() => props.boardId, fetchBoardInfo); // Refetch if boardId changes (e.g.,
 .edit-container {
   display: flex;
   justify-content: center;
-  padding: 1rem; /* Reduced padding for mobile */
+  padding: 1rem;
   min-height: 100vh;
-  background-color: #f4f6f8; /* Lighter background */
+  background-color: #f4f6f8;
 }
 
 .edit-card {
   width: 100%;
   max-width: 900px;
   background-color: #ffffff;
-  border-radius: 8px; /* Slightly smaller radius */
+  border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  padding: 1rem; /* Consistent padding */
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 2rem); /* Full height minus padding */
-  overflow: hidden; /* Prevent content overflow */
+  height: calc(100vh - 2rem); /* Keep fixed height for the card */
+  overflow: hidden; /* Card itself does not scroll, its inner content will */
+}
+
+/* NEW: editor-wrapper is now the primary scrollable area */
+.editor-wrapper {
+  flex-grow: 1; /* Allows it to take remaining vertical space in .edit-card */
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; /* *** This makes the main editor content + footer scroll *** */
 }
 
 .divider {
   border: none;
   border-top: 1px solid #e2e8f0;
-  margin: 0.75rem 0; /* Consistent margin */
+  margin: 0.75rem 0;
 }
 
-/* Title Area */
+/* Title Area (styles unchanged) */
 .title-section {
   position: relative;
-  padding-bottom: 0.5rem; /* Space for counter */
+  padding-bottom: 0.5rem;
 }
 
 .title-field {
   width: 100%;
-  padding: 0.75rem 0.5rem; /* Adjust padding */
-  font-size: 1.2rem; /* Slightly smaller title */
-  font-weight: 600; /* Bold title */
+  padding: 0.75rem 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 600;
   color: #1a202c;
   border: none;
   outline: none;
@@ -509,17 +517,24 @@ watch(() => props.boardId, fetchBoardInfo); // Refetch if boardId changes (e.g.,
 
 /* Editor Area */
 .editor-area {
-  flex-grow: 1; /* Take remaining space */
+  flex-grow: 1; /* Take remaining space within .editor-wrapper, pushes word-counter/mobile-actions/footer down */
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Contain editor scrolling */
+  /* overflow: hidden; */ /* REMOVED: This was likely redundant and problematic */
 }
 
-/* Editor Content */
+/* Editor Content Wrapper (parent of tiptap content) */
+.editor-content-wrapper {
+  flex-grow: 1; /* Allows it to take remaining space within editor-area */
+  display: flex; /* Make it a flex container to allow editor-content to grow */
+  flex-direction: column;
+}
+
+/* Editor Content (Tiptap's editable area) */
 .editor-content {
-  flex-grow: 1;
-  overflow-y: auto; /* Allow content to scroll */
-  padding: 0.5rem; /* Padding inside the scroll area */
+  flex-grow: 1; /* This will ensure the editor content fills remaining space within editor-content-wrapper */
+  overflow-y: auto; /* Allow content to scroll internally */
+  padding: 0.5rem;
   line-height: 1.6;
   color: #2d3748;
 }
@@ -661,7 +676,7 @@ watch(() => props.boardId, fetchBoardInfo); // Refetch if boardId changes (e.g.,
 .mobile-actions {
     border-top: 1px solid #e2e8f0;
     padding-top: 0.5rem;
-    background-color: #fff; /* Ensure background */
+    background-color: #fff;
 }
 
 .mobile-toolbar {
@@ -721,8 +736,8 @@ watch(() => props.boardId, fetchBoardInfo); // Refetch if boardId changes (e.g.,
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 1rem; /* Space above footer */
-  padding-top: 1rem; /* Space inside footer */
+  margin-top: 1rem;
+  padding-top: 1rem;
   border-top: 1px solid #e2e8f0;
 }
 
@@ -807,24 +822,23 @@ watch(() => props.boardId, fetchBoardInfo); // Refetch if boardId changes (e.g.,
 
 @media (max-width: 767px) {
   .edit-container {
-    padding: 0; /* Full width on mobile */
-     background-color: #ffffff; /* Match card background */
+    padding: 0;
+    background-color: #ffffff;
   }
   .edit-card {
-    border-radius: 0; /* No radius on mobile */
-    box-shadow: none; /* No shadow */
-    padding: 0.75rem; /* Reduced padding */
-    height: 100vh; /* Full viewport height */
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0.75rem;
+    height: 100vh; /* Full viewport height for mobile */
   }
 
   .desktop-toolbar {
-    display: none; /* Hide desktop toolbar */
+    display: none;
   }
   .mobile-actions {
-    display: block; /* Show mobile actions section */
-     margin-top: auto; /* Push to bottom */
+    display: block;
+    margin-top: auto;
   }
-
 
   .title-field {
      font-size: 1.1rem;
@@ -834,35 +848,36 @@ watch(() => props.boardId, fetchBoardInfo); // Refetch if boardId changes (e.g.,
      bottom: 0.2rem;
    }
 
+  /* Ensure editor-wrapper scrolls on mobile too */
+   .editor-wrapper {
+     overflow-y: auto;
+   }
 
   .editor-content {
-    padding: 0.5rem 0; /* Remove horizontal padding if desired */
+    padding: 0.5rem 0;
   }
    :deep(.ProseMirror) {
      min-height: calc(100vh - 280px); /* Adjust based on other elements' height */
    }
 
-
   .footer-actions {
-    padding: 0.75rem; /* Match card padding */
-     background-color: #fff; /* Ensure background */
+    padding: 0.75rem;
+     background-color: #fff;
       border-top: 1px solid #e2e8f0;
-       position: sticky; /* Make footer sticky */
-       bottom: 0; /* Stick to bottom */
+       position: static; /* REMOVED: No longer sticky on mobile, scrolls with editor-wrapper */
+       bottom: unset;
   }
 
   .cancel-button i {
-     display: none; /* Hide icon on mobile cancel */
+     display: none;
   }
    .submit-button, .cancel-button, .draft-button {
-     padding: 0.5rem 1rem; /* Smaller buttons */
+     padding: 0.5rem 1rem;
      font-size: 0.85rem;
    }
 
-   /* Hide board badge on mobile */
    .board-badge {
        display: none;
    }
 }
-
 </style>

@@ -1,26 +1,22 @@
 <template>
   <div class="home-container" :class="{ 'mobile': isMobile, 'sidebar-expanded': isSidebarExpanded && !isMobile, 'sidebar-collapsed': !isSidebarExpanded && !isMobile }">
-    <!-- 电脑端侧边栏 -->
     <Sidebar v-if="!isMobile" class="sidebar-component" @toggle-sidebar="updateSidebarState" />
     
-    <!-- 移动端导航栏 -->
-    <MobileNavbar v-if="isMobile" :unread-mail-count="unreadMailCount" @open-mail-modal="openMailModal" />
+    <MobileNavbar v-if="isMobile" :unread-mail-count="unreadMailCount" @open-mail-modal="handleOpenMailModalDefaults" />
     
     <div class="main-content-wrapper" :class="{ 'mobile-content': isMobile }">
       <div class="main-content-inner">
-        <!-- Desktop-only top-right buttons -->
         <div class="top-right-actions desktop-only" v-if="!isMobile">
             <el-tooltip content="用户设置" placement="bottom">
-              <el-button :icon="User" circle @click="goToUserPage"></el-button>
+              <el-button :icon="User" circle @click="goToUserPage(userStore.currentUserId)"></el-button>
             </el-tooltip>
             <el-tooltip content="站内信" placement="bottom">
               <el-badge :value="unreadMailCount" :hidden="unreadMailCount < 1" class="mail-badge" type="danger">
-                <el-button :icon="Message" circle @click="openMailModal"></el-button>
+                <el-button :icon="Message" circle @click="handleOpenMailModalDefaults"></el-button>
               </el-badge>
             </el-tooltip>
         </div>
 
-        <!-- Conditionally render homepage content based on route -->
         <template v-if="isBaseHomeRoute">
           <transition name="fade-slide" appear>
             <el-carousel :interval="5000" arrow="always" :height="isMobile ? '200px' : '380px'" class="home-carousel" indicator-position="outside">
@@ -62,32 +58,7 @@
               </el-card>
             </div>
           </transition>
-          
-          <transition name="fade-slide" appear>
-            <div class="section-title">
-              <el-icon><Star /></el-icon>
-              <h2>热门推荐</h2>
-            </div>
-          </transition>
-          <transition-group tag="el-row" :gutter="20" name="fade-slide-list" class="recommendation-row" appear>
-            <el-col :xs="24" :sm="12" :md="8" v-for="i in 3" :key="i" class="recommendation-col">
-              <el-card class="box-card recommendation-card" shadow="hover">
-                <template #header>
-                  <div class="card-header">
-                    <span>推荐内容 {{i}}</span>
-                    <el-button class="button" text>详情</el-button>
-                  </div>
-                </template>
-                <div class="recommendation-content">
-                  这里是一些推荐内容的简介，吸引用户点击查看更多详情。
-                  <img :src="`https://picsum.photos/300/150?random=${i}`" alt="Recommendation Image" class="recommendation-image">
-                </div>
-              </el-card>
-            </el-col>
-          </transition-group>
-        </template> <!-- End of v-if="isBaseHomeRoute" -->
-
-        <router-view v-slot="{ Component }">
+        </template> <router-view v-slot="{ Component }">
           <transition name="route-fade" mode="out-in">
             <component :is="Component" />
           </transition>
@@ -95,25 +66,32 @@
 
       </div>
     </div>
-    <MailModal v-model:visible="mailModalVisible" :current-user-id="currentUserId" />
-  </div>
+    <MailModal 
+      :visible="mailStore.isMailModalVisible" 
+      @update:visible="handleMailModalVisibilityUpdate" 
+    />
+    </div>
 </template>
 
 <script setup>
 import Sidebar from '../components/Sidebar.vue';
 import MobileNavbar from '../components/MobileNavbar.vue';
-import MailModal from '../components/MailModal.vue';
+import MailModal from '../components/MailModal.vue'; // 你的 MailModal 组件
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { User, Message, List, Star, ArrowRight } from '@element-plus/icons-vue';
+import { useUserStore } from "@/stores/user.js";
+import { useMailStore } from '@/stores/mailStore'; // 【修改点】导入 mailStore
+import { getUnreadCount } from "@/api/message";
 
 const router = useRouter();
 const route = useRoute();
+const userStore = useUserStore();
+const mailStore = useMailStore(); // 【修改点】使用 mailStore
 
 const isMobile = ref(false);
-const mailModalVisible = ref(false);
+// const mailModalVisible = ref(false); // 【修改点】移除本地的 mailModalVisible，改用 mailStore.isMailModalVisible
 const unreadMailCount = ref(0);
-const currentUserId = ref(null);
 const isSidebarExpanded = ref(true);
 
 const isBaseHomeRoute = computed(() => {
@@ -121,24 +99,24 @@ const isBaseHomeRoute = computed(() => {
 });
 
 const carouselItems = ref([
-  { id: 1, image: 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80', alt: 'Scenic Landscape' },
-  { id: 2, image: 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80', alt: 'Mountain Lake' },
+  // ... (轮播图数据保持不变)
+  { id: 1, image: 'https://i0.hdslb.com/bfs/new_dyn/dbcb33dc251fa7aae293053949d515343493074812537552.jpg@1192w_794h.webp', alt: 'Scenic Landscape' },
+  { id: 2, image: 'https://i0.hdslb.com/bfs/new_dyn/4453126195f57151b6a2b2370853fc833493074812537552.jpg@1058w_794h.webp', alt: 'Mountain Lake' },
   { id: 3, image: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80', alt: 'Forest Path' },
   { id: 4, image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80', alt: 'Coastal View' },
 ]);
 
 const announcements = ref([
-  { title: '公告标题 1：系统维护通知', content: '我们将在X月X日进行系统维护，期间服务可能会短暂中断，敬请谅解。', date: '2024-03-10' },
-  { title: '公告标题 2：新功能上线', content: '令人兴奋的新功能已经上线，包括用户自定义主题和增强的搜索功能，快来体验吧！', date: '2024-03-08' },
-  { title: '公告标题 3：节假日活动预告', content: '为庆祝传统佳节，我们将举办一系列线上活动，丰厚奖品等您拿！', date: '2024-03-05' },
+  { title: '公告标题 2：kc_forum v1.0上线！！', content: '经过主包不谢努力,基本上完成了论坛第一版的全部功能', date: '2025-06-11' },
+  { title: '公告标题 1：kc_forum v0.1上线！！', content: '先上一版试试水', date: '2025-03-03' },
 ]);
-const activeNames = ref(['1']);
+const activeNames = ref(['1']); // 默认展开第一个公告
 
 const checkIsMobile = () => {
   isMobile.value = window.innerWidth < 768;
   if (isMobile.value) {
-      isSidebarExpanded.value = false;
-  } else {
+      isSidebarExpanded.value = false; // 移动端默认折叠侧边栏
+      // 电脑端恢复侧边栏状态
       const storedSidebarState = localStorage.getItem('sidebarExpanded');
       isSidebarExpanded.value = storedSidebarState !== null ? JSON.parse(storedSidebarState) : true;
   }
@@ -146,34 +124,77 @@ const checkIsMobile = () => {
 
 const handleResize = () => checkIsMobile();
 
-const goToUserPage = () => router.push('/user');
-const openMailModal = () => mailModalVisible.value = true;
-const viewMoreAnnouncements = () => router.push('/announcements');
-
-const getCurrentUserId = async () => {
-  const storedId = localStorage.getItem('userId');
-  if (storedId) return parseInt(storedId, 10);
-  return new Promise(resolve => setTimeout(() => resolve(123), 100)); 
+const goToUserPage = (userId) => {
+  if (userId) {
+    router.push(`/home/user-profile/${userId}`);
+  } else {
+    console.error("goToUserPage: userId is undefined or null. Current userStore state:", userStore);
+  }
 };
 
+/**
+ * 打开站内信弹窗到默认视图 (会话列表)
+ * 这个方法会被顶部的“站内信”图标和 MobileNavbar 组件调用
+ */
+const handleOpenMailModalDefaults = () => {
+  console.log('[Home.vue] Opening mail modal to default view.');
+  mailStore.openMailModal(); // 调用 store action 打开，不指定特定用户
+};
+
+const viewMoreAnnouncements = () => router.push('/home/announcements'); // 确保路由路径正确
+
+
 const getUnreadMail = async () => {
-  return new Promise(resolve => setTimeout(() => {
-    const count = Math.floor(Math.random() * 6);
-    resolve(count);
-  }, 500));
+  try {
+    const res = await getUnreadCount();
+    // console.log('Unread mail count response:', res); // 调试日志
+    if (res.data.code === 200 && typeof res.data.data === 'number') { // 确保 data 是数字
+      unreadMailCount.value = res.data.data;
+    } else if (res.data.code === 200) {
+      console.warn('getUnreadCount returned data but not in expected number format:', res.data.data);
+      unreadMailCount.value = 0; // 或其他默认处理
+    }
+  } catch (error) {
+    console.error("获取未读消息失败", error);
+    unreadMailCount.value = 0; // 出错时设为0
+  }
 };
 
 const updateSidebarState = (isExpanded) => {
   isSidebarExpanded.value = isExpanded;
-  localStorage.setItem('sidebarExpanded', JSON.stringify(isExpanded));
+  if(!isMobile.value){ // 只在非移动端设备上保存侧边栏状态
+    localStorage.setItem('sidebarExpanded', JSON.stringify(isExpanded));
+  }
   console.log("Sidebar state updated in Home:", isExpanded);
+};
+
+/**
+ * 【修改点】处理 MailModal 的 @update:visible 事件
+ * 当 MailModal 内部关闭时（例如点击关闭按钮或按 ESC），它会 emit('update:visible', false)
+ * 这个函数会捕获这个事件，并调用 store action 来更新全局状态。
+ */
+const handleMailModalVisibilityUpdate = (isVisible) => {
+  if (!isVisible) { // 通常 MailModal 只会 emit false 来请求关闭
+    mailStore.closeMailModal();
+  }
+  // 如果 MailModal 可能会 emit true (虽然在此场景下不太可能)，你也可以处理:
+  // else { mailStore.openMailModal(); /* 或者其他逻辑 */ }
 };
 
 onMounted(async () => {
   checkIsMobile();
   window.addEventListener('resize', handleResize);
-  currentUserId.value = await getCurrentUserId();
-  unreadMailCount.value = await getUnreadMail();
+  // 确保 userStore.currentUserId 可用后再调用依赖它的函数
+  if (userStore.currentUserId) { // 或者等待 userStore 初始化完毕
+      getUnreadMail();
+  } else {
+      // 如果 currentUserId 可能延迟加载，监听其变化
+      watch(() => userStore.currentUserId, (newUserId) => {
+          if (newUserId) {
+              getUnreadMail();
+          }
+      }, { immediate: true }); // immediate: true 确保如果值已存在也会立即执行
+  }
 });
 
 onUnmounted(() => {
@@ -182,33 +203,20 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Import a nice Google Font */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
 
 .home-container {
   display: flex;
   min-height: 100vh;
   background-color: #f4f6f8; /* Lightened background */
   overflow-x: hidden;
-  font-family: 'Noto Sans SC', sans-serif; /* Apply modern font */
+  font-family:  sans-serif; 
   transition: padding-left 0.3s ease-in-out; /* For sidebar adjustment */
 }
 
 .sidebar-component {
   flex-shrink: 0;
-  /* Sidebar should manage its own width via props or internal state */
-  /* transition: width 0.3s ease-in-out; */
 }
 
-/* Adjustments for when sidebar is present and its state */
-.home-container.sidebar-collapsed .main-content-wrapper {
-   /* Adjust based on your collapsed sidebar width */
-  /* This might not be needed if sidebar is absolutely positioned or flex item correctly shrinks */
-}
-
-.home-container.sidebar-expanded .main-content-wrapper {
-  /* Adjust based on your expanded sidebar width */
-}
 
 .main-content-wrapper {
   flex-grow: 1;

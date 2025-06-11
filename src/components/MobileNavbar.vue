@@ -3,7 +3,7 @@
     <div class="mobile-header">
       <div class="mobile-logo" @click="goHome">
         <img src="../assets/kc1.png" alt="Logo">
-        <span>wwelcome!</span>
+        <span>welcome!</span>
       </div>
       <div class="header-actions">
         <el-badge :value="unreadMailCount" :hidden="unreadMailCount === 0" class="action-badge">
@@ -11,7 +11,7 @@
             <el-icon><Message /></el-icon>
           </div>
         </el-badge>
-        <div class="action-icon" @click="goToUserPage" title="用户设置">
+        <div class="action-icon" @click="goToUserPage(userStore.currentUserId)" title="用户设置">
           <el-icon><User /></el-icon>
         </div>
         <div class="menu-toggle action-icon" @click="toggleMenu">
@@ -48,7 +48,9 @@ import { useRouter, useRoute } from 'vue-router';
 import request from '@/utils/request';
 // Import Element Plus icons
 import { User, Message, Menu, Close, Folder, SwitchButton } from '@element-plus/icons-vue';
+import {useUserStore} from "@/stores/user.js";
 
+const userStore = useUserStore();
 const props = defineProps({
   unreadMailCount: {
     type: Number,
@@ -72,10 +74,13 @@ const goHome = () => {
   closeMenu();
 };
 
-const goToUserPage = () => {
-  router.push('/user');
-  closeMenu(); // Close menu if open after navigation
-};
+const goToUserPage = (userId) => {
+  if (userId) {
+    router.push(`/home/user-profile/${userId}`);
+  }else{
+    console.error("userId不存在")
+  }
+}
 
 const handleOpenMailModal = () => {
   emit('open-mail-modal');

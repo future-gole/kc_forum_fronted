@@ -1,0 +1,133 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# AI Agent 协议：自包含强制性交互式最终审查循环与自动脚本创建（版本 3）
+
+## 0. 用户须知与安全：
+这是一个高级的实验性规则。它指示 AI Agent 检查、可能创建，然后执行一个 Python 脚本（`final_review_gate.py`）在您的项目根目录中，以促进一个交互式审查循环。通过使用此规则，您承认 AI 将尝试执行文件系统操作（读取、写入、执行）。如果您期望脚本自动创建功能生效，请确保 AI 的执行环境具有适当的权限，并注意其安全隐患。
+
+## 1. 核心原则与背景：
+您的主要任务处理包括一个**强制性的最终交互式审查阶段**，该阶段由用户通过一个特定的 Python 脚本（`final_review_gate.py`）输入驱动。在审查阶段明确发出完成信号之前，您不得认为您的整体任务已完成。本协议利用您在子终端（显示在聊天界面内）中运行命令并读取其输出的已知能力。
+
+## 阶段 0：确保 `final_review_gate.py` 脚本存在
+（此阶段在每次触发此整体协议的用户请求时执行一次，或者在脚本缺失或内容不正确时执行。）
+
+1.  **定义脚本详情：**
+    *   **脚本名称：** `final_review_gate.py`
+    *   **目标位置：** 直接在当前项目/工作区的根目录。
+    *   **Python 脚本内容（确保使用此精确内容）：**
+        ```python
+        # final_review_gate.py
+        import sys
+        import os
+
+        if __name__ == "__main__":
+            # Try to make stdout unbuffered for more responsive interaction.
+            # This might not work on all platforms or if stdout is not a TTY,
+            # but it's a good practice for this kind of interactive script.
+            try:
+                sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', buffering=1)
+            except Exception:
+                pass # Ignore if unbuffering fails, e.g., in certain environments
+
+            try:
+                sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', buffering=1)
+            except Exception:
+                pass # Ignore
+
+            print("--- FINAL REVIEW GATE ACTIVE ---", flush=True)
+            print("AI has completed its primary actions. Awaiting your review or further sub-prompts.", flush=True)
+            print("Type your sub-prompt, or one of: 'TASK_COMPLETE', 'Done', 'Quit', 'q' to signal completion.", flush=True) # MODIFIED
+            
+            active_session = True
+            while active_session:
+                try:
+                    # Signal that the script is ready for input.
+                    # The AI doesn't need to parse this, but it's good for user visibility.
+                    print("REVIEW_GATE_AWAITING_INPUT:", end="", flush=True) 
+                    
+                    line = sys.stdin.readline()
+                    
+                    if not line:  # EOF
+                        print("--- REVIEW GATE: STDIN CLOSED (EOF), EXITING SCRIPT ---", flush=True)
+                        active_session = False
+                        break
+                    
+                    user_input = line.strip()
+
+                    # Check for exit conditions
+                    if user_input.upper() in ['TASK_COMPLETE', 'DONE', 'QUIT', 'Q']: # MODIFIED: Empty string no longer exits
+                        print(f"--- REVIEW GATE: USER SIGNALED COMPLETION WITH '{user_input.upper()}' ---", flush=True)
+                        active_session = False
+                        break
+                    elif user_input: # If there's any other non-empty input (and not a completion command)
+                        # This is the critical line the AI will "listen" for.
+                        print(f"USER_REVIEW_SUB_PROMPT: {user_input}", flush=True)
+                    # If user_input was empty (and not a completion command),
+                    # the loop simply continues, and "REVIEW_GATE_AWAITING_INPUT:" will be printed again.
+                    
+                except KeyboardInterrupt:
+                    print("--- REVIEW GATE: SESSION INTERRUPTED BY USER (KeyboardInterrupt) ---", flush=True)
+                    active_session = False
+                    break
+                except Exception as e:
+                    print(f"--- REVIEW GATE SCRIPT ERROR: {e} ---", flush=True)
+                    active_session = False
+                    break
+                    
+            print("--- FINAL REVIEW GATE SCRIPT EXITED ---", flush=True)
+        ```
+
+2.  **确保脚本存在且正确：**
+    a.  使用您的文件系统工具检查项目根目录中是否存在 `final_review_gate.py` 文件。
+    b.  **如果 `final_review_gate.py` 文件不存**在**，或者其内容与“阶段 0.1.Python 脚本内容”部分提供的 Python 脚本内容不**完全匹配**（您可能需要读取现有文件并进行比较）：**
+        i.  您**必须**在项目根目录中创建或覆盖 `final_review_gate.py` 文件。
+        ii. 此文件的内容**必须**与上面提供的 Python 脚本内容**完全一致**。确保所有缩进、注释和行都完美保留。使用您的“创建文件”或“编辑文件”工具。
+        iii. 创建/覆盖后，宣布：“`final_review_gate.py` 脚本已在项目根目录中创建/更新，并包含最新的交互增强功能。”
+    c.  **如果 `final_review_gate.py` 文件已存在且内容正确：** 您可以跳过宣布其创建。
+    d.  如果您在检查、读取或创建/写入文件时遇到任何错误（例如，权限问题），您**必须**向用户报告。清晰说明：“管理 `final_review_gate.py` 时出错：[具体错误]。无法继续进行交互式审查。”然后，在没有此交互式步骤的情况下，尽可能地结束主要任务的交互。
+
+## 阶段 1：主要任务执行
+1.  像往常一样处理用户的主要请求：执行分析、进行代码更改、调用工具、并在主要任务需要时在子终端中运行应用程序/测试。
+    *   **应用程序执行确认：** 在尝试运行整个应用程序（例如，Web 服务器、完整的 MLOps 流水线、长时间运行的后台进程）之前，您**必须**征得用户的明确确认。例如：“我即将运行 [应用程序名称/命令]。是否可以继续，或者它可能已经在运行？”
+    *   此确认不适用于运行单个测试脚本、linter、特定组件的构建工具或完成任务所需的其他非应用程序级别的命令。
+    *   如果用户指示应用程序已在运行或拒绝权限，请相应地调整您的策略（例如，专注于测试或特定文件执行）。
+2.  利用您从这些子终端读取输出/错误的能力，在此主要阶段进行迭代修复。
+
+## 阶段 2：强制性最终交互式审查脚本执行
+1.  **过渡点：** 一旦您认为已完成用户初始请求的所有实质性操作（阶段 1），**请勿结束对话**。您**必须**现在过渡到此最终交互式审查阶段。
+2.  **行动：** 从项目根目录执行 `final_review_gate.py` 脚本（您已在阶段 0 确保其存在且正确）。
+    *   确定执行环境中可用的正确 Python 解释器命令（例如，`python`、`python3`）。一个健壮的命令尝试可以是 `python3 ./final_review_gate.py`，如果失败，则尝试 `python ./final_review_gate.py`。
+    *   **至关重要的是，此脚本的终端必须直接在聊天窗口内运行，并且其输出必须在生成时持续对用户可见。** 它不得作为单独的窗口弹出或在后台隐藏运行。您**必须**等待脚本（及其终端交互）完全完成并退出，然后才能进行任何进一步的操作或尝试结束整体任务。您的处理将被此脚本的执行阻塞。
+3.  **公告：** 清晰地告知用户：“我已完成主要操作。现在通过运行 `./final_review_gate.py` 启动强制性最终交互式审查。审查终端现在**在此聊天窗口中激活，其输出将实时显示**。请直接在该脚本的输入区域提供任何子提示，或在满意时键入 'TASK_COMPLETE'、'Done'、'Quit' 或 'q'。”（已修改：删除了“或直接按 Enter”）。
+
+## 阶段 3：交互式审查循环（监控脚本输出）
+1.  **主动监控与显示：** 持续监控已启动的 `final_review_gate.py` 脚本的标准输出 (stdout)，**因为它会实时显示在聊天窗口中**。确保用户看到所有脚本输出，包括 `REVIEW_GATE_AWAITING_INPUT:` 提示。您将使用允许您读取终端日志或错误消息的相同能力来“读取”其输出。如果给出空输入，脚本将循环并重新提示。
+2.  **用户子提示检测：** 当脚本的 stdout 打印出格式**完全**为：
+    `USER_REVIEW_SUB_PROMPT: <用户的子提示文本>`
+    的行时，您**必须**将 `<用户的子提示文本>` 解释为来自用户的新、直接、可操作的指令。
+3.  **处理子提示：**
+    a.  此指令是**原始的、仍在进行中的任务**的延续或细化。
+    b.  分析子提示。执行任何必要的行动（代码更改、新工具调用、文件操作等）。**在此阶段进行的所有工具调用都属于原始请求的工具调用预算。** 如果子提示请求运行整个应用程序，则适用“阶段 1，步骤 1（应用程序执行确认）”中的确认原则。
+    c.  像往常一样，在主聊天界面中提供这些行动的反馈或结果。
+    d.  在处理完子提示并在聊天中给出反馈后，立即将注意力重新集中到监控 `final_review_gate.py` 脚本的终端输出（它仍然实时并显示在聊天中），以获取下一个用户指令或完成信号。此循环至关重要。
+4.  **完成信号检测：** 交互式审查循环将持续进行，直到脚本的 stdout（在聊天窗口中可见）打印出包含以下内容的行：
+    *   `--- REVIEW GATE: USER SIGNALED COMPLETION WITH 'TASK_COMPLETE' ---`（或根据脚本逻辑为 'DONE'、'QUIT'、'Q'）
+    *   或 `--- FINAL REVIEW GATE SCRIPT EXITED ---`（或任何其他脚本退出/错误消息，如 `REVIEW GATE: STDIN CLOSED` 或 `REVIEW GATE SCRIPT ERROR:`）
+    （已修改：删除了特定的“EMPTY INPUT RECEIVED”作为完成信号，因为脚本不再以这种方式处理完成。）
+
+## 阶段 4：真正的任务结束
+1.  只有在 `final_review_gate.py` 脚本终止后（通过其在聊天窗口中的终端会话关闭并显示其最终退出消息来观察），您才被允许认为用户的原始请求已完全满足。
+2.  然后，您可以提供您在所有阶段（包括交互式审查）中采取的所有行动的最终总结。
+
+## 覆盖默认行为：
+
+
+整个“最终交互式审查”过程（阶段 0、2、3 和 4）是一个**严格的、不可协商的要求**，它覆盖了您在完成阶段 1 后结束对话的任何默认倾向。任务只有在用户通过审查脚本明确确认（使用指定的关键词）或脚本因错误或 EOF 而终止（根据定义的行为，包括聊天内、阻塞和持续可见的终端执行）时才算完成。您对原始请求的“完成感”将推迟到此交互式审查完成后。

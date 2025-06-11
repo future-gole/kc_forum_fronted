@@ -246,7 +246,8 @@ import {useRoute, useRouter} from 'vue-router';
 import request from "@/utils/request.js";
 import { ElMessage } from 'element-plus';
 import {jwtDecode} from "jwt-decode";
-
+import {uploadUserAvatar,modifyInfo,getUserData} from "@/api/user.js"
+import {getAllArticlesByUserId} from "@/api/article.js"
 const route = useRoute();
 const router = useRouter();
 const userData = ref({});
@@ -309,18 +310,14 @@ const uploadAvatar = async (event) => {
   formData.append('file', file);
 
   try {
-    const response = await request.post(`/user/uploadAvatar`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await uploadUserAvatar(formData);
 
     if (response.data.code === 200) {
       // 更新头像 URL
       userData.value.avatarUrl = response.data.message.replace(avatarBaseURL, ''); // 后端返回完整的 URL，需要处理一下
       ElMessage.success('头像上传成功！');
     } else {
-      ElMessage.success(`头像上传失败: ${response.data.message}`);
+      ElMessage.error(`头像上传失败: ${response.data.message}`);
     }
   } catch (error) {
     console.error('头像上传出错:', error);
@@ -330,9 +327,6 @@ const uploadAvatar = async (event) => {
     fileInput.value.value = '';
   }
 };
-
-
-
 
 // 编辑个人资料相关状态
 const showEditProfileModal = ref(false);
@@ -387,7 +381,7 @@ const updateProfile = async () => {
   try {
     console.log(1)
     isSubmitting.value = true;
-    const response = await request.post('/user/modifyInfo', editForm.value);
+    const response = await modifyInfo(editForm);
 
     if (response.data.code === 200) {
       // 更新成功，刷新用户数据
@@ -558,7 +552,7 @@ const formatDateTime = (dateString) => {
 const fetchUserData = async (userId) => {
   try {
     isLoading.value = true;
-    const response = await request.get(`/user/info?id=${userId}`);
+    const response = await getUserData(userId);
 
     if (response.data.code === 200) {
       userData.value = response.data.data;
@@ -575,7 +569,7 @@ const fetchUserArticles = async (userId) => {
   try {
     // 这里获取用户文章的API
     console.log(userId);
-    const response = await request.get(`/article/getAllArticlesByUserId?userId=${userId}`);
+    const response = await getAllArticlesByUserId(userId);
 
     if (response.data.code === 200) {
       userArticles.value = response.data.data || [];
