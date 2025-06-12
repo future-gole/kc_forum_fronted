@@ -63,11 +63,11 @@
             </div>
 
             <div class="article-user" v-if="article.user">
-              <el-avatar :src="getFullAvatarUrl(article.user.avatarUrl)" :size="40"></el-avatar>
+              <el-avatar :src="getFullAvatarUrl(article.user.avatarUrl)" :size="40"/>
               <span class="user-name">{{ article.user.nickName }}</span>
             </div>
             <div class="article-user" v-else>
-              <el-avatar :src="defaultAvatarUrl" :size="40"></el-avatar>
+              <el-avatar :src="defaultAvatarUrl" :size="40"/>
               <span class="user-name">未知用户</span>
             </div>
 

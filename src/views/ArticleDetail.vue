@@ -239,7 +239,6 @@ watchEffect(() => {
 .article-detail-container {
   /* 保持最大宽度和水平居中 */
   max-width: 960px; /* 可以稍微加宽一点 */
-  margin: 2rem auto; /* **新增**: 上下外边距2rem，左右自动居中 */
   
   /* 其他基础样式保持不变 */
   position: relative;
@@ -278,7 +277,6 @@ watchEffect(() => {
 /* 4. 响应式调整，确保移动端体验 */
 @media (max-width: 768px) {
   .article-detail-container {
-    margin: 1rem; /* 在移动端，使用1rem的外边距，而不是auto */
     padding: 0; /* 在移动端，让内部卡片自己控制padding */
   }
   .article-header,
