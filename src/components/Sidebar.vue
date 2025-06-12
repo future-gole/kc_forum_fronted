@@ -5,7 +5,7 @@
         <a href="#">
           <div class="icon">
             <div class="imageBox">
-              <img src="../assets/kc1.png" alt="Logo">
+              <img :src="kc1ImageUrl" alt="Logo">
             </div>
           </div>
           <div class="text">welcome！</div>
@@ -42,7 +42,7 @@ const router = useRouter();
 const route = useRoute();
 const isExpanded = ref(false);
 const boards = ref([]);
-
+import kc1ImageUrl from '@/assets/kc1.png';
 // 在setup函数的开始就设置token
 const setupAxiosToken = () => {
   const token = localStorage.getItem('token');

@@ -6,7 +6,11 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
+.cursor
+.idea
+修改建议.md
+PROJECT_README_AND_DEV_LOG.md
+*.py
 node_modules
 .DS_Store
 dist

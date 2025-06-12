@@ -2,7 +2,7 @@
   <div class="mobile-navbar">
     <div class="mobile-header">
       <div class="mobile-logo" @click="goHome">
-        <img src="../assets/kc1.png" alt="Logo">
+        <img :src="kc1ImageUrl" alt="Logo">
         <span>welcome!</span>
       </div>
       <div class="header-actions">
@@ -49,7 +49,7 @@ import request from '@/utils/request';
 // Import Element Plus icons
 import { User, Message, Menu, Close, Folder, SwitchButton } from '@element-plus/icons-vue';
 import {useUserStore} from "@/stores/user.js";
-
+import kc1ImageUrl from '@/assets/kc1.png';
 const userStore = useUserStore();
 const props = defineProps({
   unreadMailCount: {

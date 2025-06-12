@@ -20,4 +20,7 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  build: {
+    sourcemap: true, // <--- 确保这一行存在并为 true
+  }
 })

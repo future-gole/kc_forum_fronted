@@ -2,8 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Home from '../views/Home.vue'
 import BoardView from '@/views/BoardView.vue';
 import ArticleDetail from '@/views/ArticleDetail.vue';
-import Login from "@/components/Login.vue";
-import MobileLogin from "@/components/MobileLogin.vue";
 import EditView from '@/views/EditView.vue';
 import User from '@/views/User.vue';
 
@@ -15,12 +13,14 @@ const routes = [
     redirect: '/login'
   },
   {
-    path: '/login',
-    name: 'Login',
-    component: () => {
-      const isMobile = window.innerWidth < 768;
-      return isMobile ? MobileLogin : Login;
-    }
+  path: '/login',
+  name: 'Login',
+  component: () => {
+    const isMobile = window.innerWidth < 768;
+    // 无论哪个组件，都用 Promise.resolve 包装一下，或者直接用动态 import
+    // 为了更符合异步组件的模式，推荐使用动态 import
+    return isMobile ? import('@/components/MobileLogin.vue') : import('@/components/Login.vue');
+  }
   },
   {
     path: '/home',

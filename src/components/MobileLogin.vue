@@ -2,7 +2,7 @@
   <div class="mobile-login-page">
     <div class="login-container">
       <div class="login-header">
-        <img src="../assets/kc1.png" alt="Logo" class="logo">
+        <img src="../assets/kc2.png" alt="Logo" class="logo">
         <h1>欢迎使用 kc-forum</h1>
         <p class="subtitle">JOIN US!</p>
       </div>

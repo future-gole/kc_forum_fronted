@@ -79,8 +79,12 @@ const loginForm = reactive({
 });
 
 // 切换表单状态
+import kc1ImageUrl from '@/assets/kc1.png';
+import kc2ImageUrl from '@/assets/kc2.png';
+
 const flag = ref(true);
-const imgSrc = ref('src/assets/kc1.png');
+const imgSrc = ref(kc1ImageUrl); // 初始值是导入的图片 URL
+
 const preBoxTransform = ref('translateX(0%)');
 const preBoxBackgroundColor = ref('#F2B8B5');
 
@@ -88,11 +92,11 @@ const switchForm = () => {
   if (flag.value) {
     preBoxTransform.value = 'translateX(100%)';
     preBoxBackgroundColor.value = '#A6D1E6';
-    imgSrc.value = 'src/assets/kc2.png';
+    imgSrc.value = kc2ImageUrl; // 直接赋值导入的图片 URL 变量
   } else {
     preBoxTransform.value = 'translateX(0%)';
     preBoxBackgroundColor.value = '#F2B8B5';
-    imgSrc.value = 'src/assets/kc1.png';
+    imgSrc.value = kc1ImageUrl; // 直接赋值导入的图片 URL 变量
   }
   flag.value = !flag.value;
 };
