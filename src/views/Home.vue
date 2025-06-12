@@ -100,8 +100,8 @@ const isBaseHomeRoute = computed(() => {
 
 const carouselItems = ref([
   // ... (轮播图数据保持不变)
-  { id: 1, image: 'https://i0.hdslb.com/bfs/new_dyn/dbcb33dc251fa7aae293053949d515343493074812537552.jpg@1192w_794h.webp', alt: 'Scenic Landscape' },
-  { id: 2, image: 'https://i0.hdslb.com/bfs/new_dyn/4453126195f57151b6a2b2370853fc833493074812537552.jpg@1058w_794h.webp', alt: 'Mountain Lake' },
+  { id: 1, image: 'https://c-ssl.duitang.com/uploads/blog/202404/07/73S2Q7nAIeB8wqa.jpg', alt: 'Scenic Landscape' },
+  { id: 2, image: 'https://c-ssl.duitang.com/uploads/blog/202311/29/OoSzm8nJU6pEDvO.jpg', alt: 'Mountain Lake' },
   { id: 3, image: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80', alt: 'Forest Path' },
   { id: 4, image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80', alt: 'Coastal View' },
 ]);
@@ -309,10 +309,6 @@ onUnmounted(() => {
   .home-carousel :deep(.el-carousel__arrow i) {
     font-size: 10px;
   }
-   .home-carousel :deep(.el-carousel__indicators--outside) {
-    /* Hide indicators on mobile if they are too obtrusive, or style them smaller */
-    /* display: none; */ 
-  }
 }
 
 /* Section Title Styling */
@@ -404,9 +400,7 @@ onUnmounted(() => {
 }
 
 /* Recommendation Section */
-.recommendation-row {
-  /* This class is for the transition-group tag */
-}
+
 .recommendation-col {
   margin-bottom: 20px;
 }

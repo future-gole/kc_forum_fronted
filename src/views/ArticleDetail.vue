@@ -39,7 +39,7 @@
         <div class="author-like-row">
           <div class="author-info">
             <div class="avatar-link" @click="navigateToUserProfile(article.user.id)">
-              <el-avatar :size="40" :src="getFullAvatarUrl(article.user.avatarUrl)" />
+              <el-avatar :size="80" :src="getFullAvatarUrl(article.user.avatarUrl)" />
               <div class="author-details">
                 <span class="user-name-link">{{ article.user.nickName }}</span>
               </div>
@@ -117,6 +117,7 @@ import 'dayjs/locale/zh-cn';
 import CommentItem from '@/components/CommentItem.vue';
 import CommentInput from '@/components/CommentInput.vue';
 import LikeButton from '@/components/LikeButton.vue';
+import {getFullAvatarUrl} from '@/api/user'
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
@@ -134,11 +135,6 @@ const pageSize = ref(10);
 const hasMoreTopLevel = ref(true);
 const boardTitle = computed(() => route.query.title || '板块');
 
-const getFullAvatarUrl = (path) => {
-  const avatarBaseURL = 'http://localhost:58080/avatars';
-  const defaultAvatarUrl = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png';
-  return path ? avatarBaseURL + path : defaultAvatarUrl;
-};
 
 const fetchArticle = async (articleId) => {
   if (!articleId) return;

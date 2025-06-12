@@ -5,22 +5,26 @@ import ArticleDetail from '@/views/ArticleDetail.vue';
 import EditView from '@/views/EditView.vue';
 import User from '@/views/User.vue';
 
-
+import MobileLogin from '@/components/MobileLogin.vue';
+import DesktopLogin from '@/components/Login.vue';
 
 const routes = [
   {
     path: '/',
-    redirect: '/login'
+    redirect: () => {
+      const isMobile = window.innerWidth < 768;
+      return isMobile ? { name: 'LoginMobile' } : { name: 'LoginDesktop' };
+    }
   },
   {
-  path: '/login',
-  name: 'Login',
-  component: () => {
-    const isMobile = window.innerWidth < 768;
-    // 无论哪个组件，都用 Promise.resolve 包装一下，或者直接用动态 import
-    // 为了更符合异步组件的模式，推荐使用动态 import
-    return isMobile ? import('@/components/MobileLogin.vue') : import('@/components/Login.vue');
-  }
+    path: '/login-mobile',
+    name: 'LoginMobile',
+    component: MobileLogin // 直接使用已导入的组件
+  },
+  {
+    path: '/login-desktop',
+    name: 'LoginDesktop',
+    component: DesktopLogin // 直接使用已导入的组件
   },
   {
     path: '/home',
@@ -71,9 +75,21 @@ const router = createRouter({
 // 路由守卫：检查需要登录的路由
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token');
-  if (to.path !== '/login' && !token) {
-    next('/login');
+  const loginPaths = ['/login-mobile', '/login-desktop']; // 或者使用路由名称 ['LoginMobile', 'LoginDesktop'] 和 to.name
+
+  // 如果目标路径不是登录页，并且没有 token
+  if (!loginPaths.includes(to.path) && !token) {
+    // 用户未登录且访问的是需要登录的页面
+    if (window.innerWidth < 768) {
+      next({ name: 'LoginMobile' }); // 使用 name 进行导航更健壮
+    } else {
+      next({ name: 'LoginDesktop' });
+    }
+  } else if (loginPaths.includes(to.path) && token) {
+    // 如果用户已登录，但尝试访问登录页，则重定向到首页 (可选，但推荐)
+    next({ name: 'Home' });
   } else {
+    // 其他情况（如：访问登录页且未登录，或访问其他页且已登录）正常放行
     next();
   }
 });

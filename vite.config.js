@@ -22,5 +22,6 @@ export default defineConfig({
   },
   build: {
     sourcemap: true, // <--- 确保这一行存在并为 true
+    cssCodeSplit: true,
   }
 })

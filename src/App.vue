@@ -13,6 +13,6 @@
 <style >
 html {
   height: 100%;
-  lang: "zh-CN";
+  /* lang: "zh-CN"; */
 }
 </style>

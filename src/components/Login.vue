@@ -18,7 +18,7 @@
             <input type="text" placeholder="验证码" v-model="registerForm.verificationCode" class="verification-code-input">
             <button @click="sendVerificationCode" :disabled="isSending" class="send-code-button">{{ sendBtnText }}</button>
           </div>
-          <input type="text" placeholder="用户名(麻烦输入真实姓名哦~)" v-model="registerForm.userName">
+          <input type="text" placeholder="用户名" v-model="registerForm.userName">
           <input type="text" placeholder="昵称(用于帖子名称显示~）" v-model="registerForm.nickName">
           <input type="password" placeholder="密码(暂不支持由邮箱找回密码~)" v-model="registerForm.password">
           <input type="password" placeholder="请确认密码" v-model="registerForm.repeatPassword">

@@ -113,11 +113,10 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/zh-cn';
 import request from "@/utils/request.js";
-
+import {getFullAvatarUrl} from '@/api/user'
 dayjs.extend(relativeTime);
 dayjs.locale('zh-cn');
 
-const avatarBaseURL = 'http://localhost:58080/avatars';
 const defaultAvatarUrl = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png';
 
 // Route and router
@@ -137,11 +136,7 @@ const activeUsers = ref(0);
 
 const boardTitle = computed(() => route.query.title || '板块');
 
-const getFullAvatarUrl = (path) => {
-    return path
-      ? avatarBaseURL + path
-      : defaultAvatarUrl;
-};
+
 
 // This computed property now handles client-side filtering and pagination
 const displayedArticles = computed(() => {
