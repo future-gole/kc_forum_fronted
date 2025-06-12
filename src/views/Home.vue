@@ -19,7 +19,7 @@
 
         <template v-if="isBaseHomeRoute">
           <transition name="fade-slide" appear>
-            <el-carousel :interval="5000" arrow="always" :height="isMobile ? '200px' : '380px'" class="home-carousel" indicator-position="outside">
+            <el-carousel :interval="5000" arrow="always" :height="isMobile ? '250px' : '500px'" class="home-carousel" indicator-position="outside">
               <el-carousel-item v-for="item in carouselItems" :key="item.id">
                 <img :src="item.image" :alt="item.alt" class="carousel-image"/>
               </el-carousel-item>
@@ -83,7 +83,10 @@ import { User, Message, List, Star, ArrowRight } from '@element-plus/icons-vue';
 import { useUserStore } from "@/stores/user.js";
 import { useMailStore } from '@/stores/mailStore'; // 【修改点】导入 mailStore
 import { getUnreadCount } from "@/api/message";
-
+import view1 from "@/assets/view1.jpg";
+import view2 from "@/assets/view2.jpg";
+import view3 from "@/assets/view3.jpg";
+import view4 from "@/assets/view4.jpg";
 const router = useRouter();
 const route = useRoute();
 const userStore = useUserStore();
@@ -100,10 +103,10 @@ const isBaseHomeRoute = computed(() => {
 
 const carouselItems = ref([
   // ... (轮播图数据保持不变)
-  { id: 1, image: 'https://c-ssl.duitang.com/uploads/blog/202404/07/73S2Q7nAIeB8wqa.jpg', alt: 'Scenic Landscape' },
-  { id: 2, image: 'https://c-ssl.duitang.com/uploads/blog/202311/29/OoSzm8nJU6pEDvO.jpg', alt: 'Mountain Lake' },
-  { id: 3, image: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80', alt: 'Forest Path' },
-  { id: 4, image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80', alt: 'Coastal View' },
+  { id: 1, image: view1, alt: 'I' },
+  { id: 2, image: view2, alt: 'Love' },
+  { id: 3, image: view3, alt: 'K' },
+  { id: 4, image: view4, alt: 'C' },
 ]);
 
 const announcements = ref([
@@ -286,30 +289,47 @@ onUnmounted(() => {
   object-fit: cover;
 }
 
-/* Mobile Carousel Indicator Styling */
-.home-carousel :deep(.el-carousel__indicators--outside) {
-  bottom: 5px; /* Adjust position if needed */
-}
+/* 默认（电脑端）指示器样式 */
 .home-carousel :deep(.el-carousel__indicator .el-carousel__button) {
-  background-color: rgba(255, 255, 255, 0.5); /* Semi-transparent dots */
+  background-color: rgba(255, 255, 255, 0.5);
   opacity: 0.7;
-  width: 8px;
-  height: 8px;
+  width: 10px; /* 电脑端指示器宽度 */
+  height: 10px; /* 电脑端指示器高度 */
   border-radius: 50%;
+  padding: 0; /* 确保没有内边距 */
+  border: none; /* 确保没有边框 */
+  box-sizing: border-box;
 }
+
+/* 激活状态指示器颜色 (全局，电脑和手机端都用这个颜色，但大小由各自规则控制) */
 .home-carousel :deep(.el-carousel__indicator.is-active .el-carousel__button) {
-  background-color: #ffffff; /* Active dot color */
+  background-color: #3b82f6; 
   opacity: 1;
 }
+
 @media (max-width: 767px) {
   .home-carousel :deep(.el-carousel__arrow) {
-    width: 28px; /* Slightly smaller arrows */
+    width: 28px;
     height: 28px;
   }
   .home-carousel :deep(.el-carousel__arrow i) {
     font-size: 10px;
   }
+
+  /* 手机端：所有指示器按钮的基础大小 */
+  .home-carousel :deep(.el-carousel__indicator .el-carousel__button) {
+    width: 4px;  /* 手机端指示器宽度 */
+    height: 4px; /* 手机端指示器高度 */
+  }
+
+  /* 手机端：确保激活状态的指示器按钮也应用这些小尺寸 */
+  /* (如果上面的规则不足以覆盖激活状态，可以使用这个更具体的) */
+  .home-carousel :deep(.el-carousel__indicator.is-active .el-carousel__button) {
+    width: 4px; 
+    height: 4px;
+  }
 }
+
 
 /* Section Title Styling */
 .section-title {
@@ -485,8 +505,8 @@ onUnmounted(() => {
     font-size: 12px;
   }
   .carousel-section :deep(.el-carousel__indicators--horizontal .el-carousel__button) {
-    width: 6px;
-    height: 6px;
+    width: 2px;
+    height: 2px;
   }
 
   .section-title .el-icon { font-size: 20px; }
