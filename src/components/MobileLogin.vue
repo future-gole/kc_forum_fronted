@@ -184,19 +184,8 @@ const handleRegister = async () => {
     ElMessage.warning('请输入验证码');
     return;
   }
-  
-  //先验证验证码
+
   try {
-    // const verifyResponse = await request.post(
-    //     `/email/verifyEmail?email=${registerForm.email}&code=${registerForm.verificationCode}`
-    // );
-    
-    // if (verifyResponse.data.code !== 200) {
-    //   ElMessage.error(verifyResponse.data.message);
-    //   return;
-    // }
-    
-    // 验证通过后执行注册
     const registerResponse = await request.post(
         '/user/register',
         {
@@ -212,7 +201,7 @@ const handleRegister = async () => {
     activeTab.value = 'login';
   } catch (error) {
     console.error('注册失败', error);
-    ElMessage.error('注册失败');
+    ElMessage.error(error.response.data.message);
   }
 };
 

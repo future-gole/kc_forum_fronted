@@ -5,7 +5,7 @@ import router from '@/router/index';
 const ACCESS_TOKEN_KEY = 'token'; // localStorage 中存储 Access Token 的键名
 
 const request = axios.create({
-  baseURL: 'http://localhost:58080',
+  baseURL: import.meta.env.VITE_APP_BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

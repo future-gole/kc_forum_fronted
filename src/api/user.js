@@ -65,7 +65,7 @@ export function getUserData(userId){
       }
     });
 }
-const avatarBaseURL = 'http://localhost:58080/avatars';
+const avatarBaseURL = import.meta.env.VITE_APP_BASE_URL;
 const defaultAvatarUrl = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png';
 export function getFullAvatarUrl (path) {
     return path
