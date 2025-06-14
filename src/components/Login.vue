@@ -173,17 +173,9 @@ const handleRegister = async () => {
     ElMessage.warning('请输入验证码');
     return;
   }
-  // //先验证验证码
+
   try {
-  //   const verifyResponse = await request.post(
-  //       `/email/verifyEmail?email=${registerForm.email}&code=${registerForm.verificationCode}`
-  //   );//后端不是以json的形式接收的！！！！！不可以包装成data发送！！！！！
-  //   if (verifyResponse.data.code !== 200) {
-  //     ElMessage.error(verifyResponse.data.message);
-  //     return;
-  //   }
-    // 验证通过后执行注册
-    const registerResponse = await request.post(
+     await request.post(
         '/user/register',
         {
           email: registerForm.email,
@@ -207,7 +199,7 @@ const handleRegister = async () => {
     } else {
       console.error('请求配置错误:', error.message);
     }
-    ElMessage.error('注册失败');
+    ElMessage.error(error.response.data.message);
   }
 };
 

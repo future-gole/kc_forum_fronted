@@ -10,7 +10,7 @@ import request from '@/utils/request'; // 确保这里的路径正确
  */
 export function searchUsers(query) {
   return request({
-    url: `/user/search`, // 假设后端有 /user/search 接口，接收 query 参数
+    url: `/user/search`, 
     method: 'get',
     params: { query },
   });

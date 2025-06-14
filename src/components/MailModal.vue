@@ -83,7 +83,7 @@ import { ref, watch, defineProps, defineEmits, nextTick, onMounted, computed } f
 import { ElMessage } from 'element-plus';
 import { Search, ArrowLeft } from '@element-plus/icons-vue';
 import { sendMessage, getAllMessagesByUserId, getRecentConversations } from '@/api/message';
-import { searchUsers, getUserDetails } from '@/api/user'; // searchUsers 仍被导入，但不再用于 handleSearchUser
+import { searchUsers, getUserDetails } from '@/api/user'; 
 import { useUserStore } from '@/stores/user';
 import { storeToRefs } from 'pinia';
 import { useMailStore } from '@/stores/mailStore';
@@ -185,11 +185,13 @@ const selectConversation = async (contactId, username, avatar) => {
       } else {
         contactUsername.value = username || `用户 ${contactId}`;
         contactAvatar.value = avatar || defaultAvatar;
+        ElMessage.error("获取联系人详情失败");
         console.error('获取联系人详情失败: ' + (res.data.message || '未知错误'));
       }
     } catch (error) {
       contactUsername.value = username || `用户 ${contactId}`;
       contactAvatar.value = avatar || defaultAvatar;
+      ElMessage.error("获取用户详情失败");
       console.error(`获取用户 ${contactId} 详情失败:`, error);
     }
   } else {
@@ -199,7 +201,7 @@ const selectConversation = async (contactId, username, avatar) => {
 
   fetchMessages(contactId);
 
-  // 【修改点3】更新 allRecentConversations
+  // 】更新 allRecentConversations
   const existingConvoIndex = allRecentConversations.value.findIndex(c => c.contact.id === contactId);
   if (existingConvoIndex !== -1) {
     const convo = allRecentConversations.value.splice(existingConvoIndex, 1)[0];
@@ -244,7 +246,7 @@ const handleSendMessage = async () => {
       newMessage.value = '';
       scrollToBottom();
 
-      // 【修改点4】更新 allRecentConversations
+      // 更新 allRecentConversations
       const convoIndex = allRecentConversations.value.findIndex(c => c.contact.id === selectedConversationUserId.value);
       if (convoIndex !== -1) {
         const convo = allRecentConversations.value[convoIndex];
@@ -271,11 +273,6 @@ const handleSendMessage = async () => {
   }
 };
 
-const formatTimestamp = (timestamp) => {
-  if (!timestamp) return '';
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-};
 
 const fetchRecentConversations = async () => {
   const currentId = currentUserId.value || userStore.currentUserId;
@@ -287,7 +284,7 @@ const fetchRecentConversations = async () => {
   try {
     const res = await getRecentConversations();
     if (res.data.code === 200 && res.data.data) {
-      // 【修改点5】将数据存储到 allRecentConversations
+      // 将数据存储到 allRecentConversations
       allRecentConversations.value = res.data.data.map(convo => ({
         contact: {
           id: convo.contactId,
@@ -310,7 +307,7 @@ const fetchRecentConversations = async () => {
   }
 };
 
-// 【修改点6】修改 handleSearchUser，移除后端 API 调用
+//  handleSearchUser，
 const handleSearchUser = () => {
   // 搜索功能现在通过 `recentConversations` 计算属性实现实时过滤。
   // 当用户在搜索框中输入内容时，`recentConversations` 会自动更新，显示匹配的会话。
@@ -329,13 +326,11 @@ const handleSearchUser = () => {
   if (recentConversations.value.length === 0) {
     ElMessage.info('未在最近会话中找到匹配用户。');
   }
-  // ！！重要提示：根据您的要求，此函数已移除对后端 `searchUsers` API 的调用。
-  // 这意味着您无法再通过此搜索框来搜索和发起与不在您最近会话列表中的新用户的聊天。
 };
 
 
 watch(() => props.visible, async (newValue) => {
-  console.log('[MailModal] props.visible changed to:', newValue);
+  // console.log('[MailModal] props.visible changed to:', newValue);
   dialogVisible.value = newValue;
 
   if (newValue) {
