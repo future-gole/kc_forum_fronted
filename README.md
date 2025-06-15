@@ -1,28 +1,26 @@
-# kc_forum_frontend
+# KCforum 论坛前端界面
+环境准备：nodejs 22.x 以上 npm 10.x 以上
 
-This template should help get you started developing with Vue 3 in Vite.
+## 推荐使用vscode
 
-## Recommended IDE Setup
+[VSCode](https://code.visualstudio.com/)
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+## 项目启动
 
 ```sh
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+## 修改环境变量
+根据后端端口进行修改 src/util/request 里面的端口，默认后端58080
+注意：由于开发的问题和重构需要的时间问题，一些接口并没有都抽取到 src/api下面 后续会完善
 
+### 项目启动
 ```sh
 npm run dev
 ```
 
-### Compile and Minify for Production
+### 项目打包
 
 ```sh
 npm run build
