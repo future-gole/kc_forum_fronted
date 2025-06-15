@@ -255,7 +255,7 @@ const userArticles = ref([]);
 const isLoading = ref(true);
 const activeTab = ref('info');
 // 头像的 baseURL，需要和后端配置的 avatar-base-url 对应
-const avatarBaseURL = 'http://localhost:58080/avatars';
+const avatarBaseURL =  import.meta.env.VITE_APP_AVATER_URL;
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png';
 //获取userStore实例
 const userStore = useUserStore();
