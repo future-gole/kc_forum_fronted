@@ -83,7 +83,7 @@ import { ref, watch, defineProps, defineEmits, nextTick, onMounted, computed } f
 import { ElMessage } from 'element-plus';
 import { Search, ArrowLeft } from '@element-plus/icons-vue';
 import { sendMessage, getAllMessagesByUserId, getRecentConversations } from '@/api/message';
-import { searchUsers, getUserDetails } from '@/api/user'; 
+import { getUserDetails } from '@/api/user'; 
 import { useUserStore } from '@/stores/user';
 import { storeToRefs } from 'pinia';
 import { useMailStore } from '@/stores/mailStore';

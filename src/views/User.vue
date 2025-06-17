@@ -223,7 +223,7 @@
 <!--          <div class="form-group">-->
 <!--            <label for="code">验证码</label>-->
 <!--            <input type="text" id="code" v-model="emailForm.code" placeholder="请输入验证码" />-->
-<!--            <button @click="sendVerificationCode">发送验证码</button>-->
+<!--            <button @click="sendCode">发送验证码</button>-->
 <!--          </div>-->
 <!--          <div class="form-group">-->
 <!--            <label for="email">新邮箱地址</label>-->
@@ -246,7 +246,7 @@ import {useRoute, useRouter} from 'vue-router';
 import request from "@/utils/request.js";
 import { ElMessage } from 'element-plus';
 import {jwtDecode} from "jwt-decode";
-import {uploadUserAvatar,modifyInfo,getUserData} from "@/api/user.js"
+import {uploadUserAvatar,modifyInfo,getUserData,sendVerificationCode,modifyPassword} from "@/api/user.js"
 import {getAllArticlesByUserId} from "@/api/article.js"
 const route = useRoute();
 const router = useRouter();
@@ -357,10 +357,6 @@ const emailForm = ref({
   email: ''
 });
 
-// // 初始化邮箱表单
-// const initEmailForm = () => {
-//   emailForm.value.email = userData.value.email;
-// };
 
 // 监听用户数据变化，更新基本信息表单
 watchEffect(() => {
@@ -400,16 +396,14 @@ const updateProfile = async () => {
 };
 
 // 发送验证码
-const sendVerificationCode = async () => {
+const sendCode = async () => {
   if (!userStore.getCurrentUserEmail()) {
     ElMessage.warning('请输入邮箱地址');
     return;
   }
 
   try {
-    const response = await request.post(
-        `/email/sendVerificationCode?email=${userStore.getCurrentUserEmail()}`
-    );
+    const response = await sendVerificationCode(userStore.getCurrentUserEmail());
 
     if (response.data.code === 200) {
       ElMessage.success('验证码已发送');
@@ -458,12 +452,7 @@ const updatePassword = async () => {
 
   try {
     isSubmitting.value = true;
-    const response = await request.post('/user/modifyPassword', null, {
-      params: {
-        password: passwordForm.value.password,
-        repeatPassword: passwordForm.value.repeatPassword
-      }
-    });
+    const response = await modifyPassword(passwordForm.value.password,passwordForm.value.repeatPassword);
 
     if (response.data.code === 200) {
       showChangePasswordModal.value = false;

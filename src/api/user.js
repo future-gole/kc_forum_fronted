@@ -2,19 +2,36 @@
 import request from '@/utils/request'; // 确保这里的路径正确
 
 /**
- * 搜索用户
- * @param {string} query - 搜索关键词
- * @returns {Promise<any>} - 后端返回的 Result<?> 对象，data 字段为用户列表 (List<User>)
- * !!! 注意：您的后端 UserController 中未提供 `/user/search` 接口。
- *      如果此接口不存在，您需要自行实现或调整前端逻辑。
+ * 修改用户密码
+ * @param {String} password 
+ * @param {String} repeatPassword 
+ * @returns 
  */
-export function searchUsers(query) {
+export function modifyPassword(password,repeatPassword){
   return request({
-    url: `/user/search`, 
-    method: 'get',
-    params: { query },
-  });
-}
+    url: `/user/modifyPassword`,
+    method: `post`,
+    params: {
+      password: password,
+      repeatPassword: repeatPassword
+    }
+  })
+};
+
+/**
+ * 发送邮箱验证码
+ * @param {String} userEmail 
+ * @returns 
+ */
+export function sendVerificationCode(userEmail){
+  return request({
+    url: `/email/sendVerificationCode`,
+    method: `get`,
+    params: {
+      email : userEmail
+    }
+  })
+};
 
 /**
  * 获取用户详情
